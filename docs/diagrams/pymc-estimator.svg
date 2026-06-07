@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="825" height="940" viewBox="10 -30 825 940">
+<rect x="10" y="-30" width="825" height="940" fill="#ffffff"/>
+<rect x="40" y="80" width="270" height="110" rx="12" ry="12" fill="#c3fae8" stroke="#06b6d4" stroke-width="2" opacity="1.0"/>
+<rect x="350" y="80" width="400" height="110" rx="12" ry="12" fill="#fff3bf" stroke="#f59e0b" stroke-width="2" opacity="1.0"/>
+<polyline points="175.0,191.0 295.0,215.0" fill="none" stroke="#06b6d4" stroke-width="2"/>
+<line x1="295.0" y1="215.0" x2="285.5" y2="218.2" stroke="#06b6d4" stroke-width="2"/>
+<line x1="295.0" y1="215.0" x2="287.5" y2="208.4" stroke="#06b6d4" stroke-width="2"/>
+<polyline points="550.0,191.0 460.0,215.0" fill="none" stroke="#f59e0b" stroke-width="2"/>
+<line x1="460.0" y1="215.0" x2="467.1" y2="207.9" stroke="#f59e0b" stroke-width="2"/>
+<line x1="460.0" y1="215.0" x2="469.7" y2="217.6" stroke="#f59e0b" stroke-width="2"/>
+<rect x="120" y="215" width="520" height="95" rx="12" ry="12" fill="#d0bfff" stroke="#8b5cf6" stroke-width="3" opacity="1.0"/>
+<polyline points="640.0,262.0 655.0,262.0" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="6 5"/>
+<line x1="655.0" y1="262.0" x2="646.3" y2="267.0" stroke="#f59e0b" stroke-width="1"/>
+<line x1="655.0" y1="262.0" x2="646.3" y2="257.0" stroke="#f59e0b" stroke-width="1"/>
+<rect x="655" y="212" width="150" height="112" rx="12" ry="12" fill="#fff3bf" stroke="#f59e0b" stroke-width="1" opacity="1.0"/>
+<polyline points="380.0,310.0 380.0,355.0" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="355.0" x2="375.0" y2="346.3" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="355.0" x2="385.0" y2="346.3" stroke="#1e1e1e" stroke-width="2"/>
+<rect x="120" y="355" width="520" height="90" rx="12" ry="12" fill="#ffd8a8" stroke="#f59e0b" stroke-width="2" opacity="1.0"/>
+<polyline points="640.0,400.0 655.0,400.0" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="6 5"/>
+<line x1="655.0" y1="400.0" x2="646.3" y2="405.0" stroke="#f59e0b" stroke-width="1"/>
+<line x1="655.0" y1="400.0" x2="646.3" y2="395.0" stroke="#f59e0b" stroke-width="1"/>
+<rect x="655" y="356" width="150" height="92" rx="12" ry="12" fill="#fff3bf" stroke="#f59e0b" stroke-width="1" opacity="1.0"/>
+<polyline points="380.0,445.0 380.0,490.0" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="490.0" x2="375.0" y2="481.3" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="490.0" x2="385.0" y2="481.3" stroke="#1e1e1e" stroke-width="2"/>
+<rect x="260" y="490" width="240" height="66" rx="12" ry="12" fill="#a5d8ff" stroke="#4a9eed" stroke-width="2" opacity="1.0"/>
+<polyline points="380.0,556.0 380.0,595.0" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="595.0" x2="375.0" y2="586.3" stroke="#1e1e1e" stroke-width="2"/>
+<line x1="380.0" y1="595.0" x2="385.0" y2="586.3" stroke="#1e1e1e" stroke-width="2"/>
+<rect x="170" y="595" width="420" height="80" rx="12" ry="12" fill="#eebefa" stroke="#ec4899" stroke-width="2" opacity="1.0"/>
+<polyline points="330.0,675.0 237.0,720.0" fill="none" stroke="#ec4899" stroke-width="2"/>
+<line x1="237.0" y1="720.0" x2="242.6" y2="711.7" stroke="#ec4899" stroke-width="2"/>
+<line x1="237.0" y1="720.0" x2="247.0" y2="720.7" stroke="#ec4899" stroke-width="2"/>
+<polyline points="430.0,675.0 522.0,720.0" fill="none" stroke="#ec4899" stroke-width="2"/>
+<line x1="522.0" y1="720.0" x2="512.0" y2="720.7" stroke="#ec4899" stroke-width="2"/>
+<line x1="522.0" y1="720.0" x2="516.4" y2="711.7" stroke="#ec4899" stroke-width="2"/>
+<rect x="110" y="720" width="255" height="70" rx="12" ry="12" fill="#b2f2bb" stroke="#22c55e" stroke-width="2" opacity="1.0"/>
+<rect x="395" y="720" width="255" height="70" rx="12" ry="12" fill="#b2f2bb" stroke="#22c55e" stroke-width="2" opacity="1.0"/>
+<polyline points="237.0,790.0 237.0,830.0" fill="none" stroke="#22c55e" stroke-width="2"/>
+<line x1="237.0" y1="830.0" x2="232.0" y2="821.3" stroke="#22c55e" stroke-width="2"/>
+<line x1="237.0" y1="830.0" x2="242.0" y2="821.3" stroke="#22c55e" stroke-width="2"/>
+<polyline points="522.0,790.0 522.0,830.0" fill="none" stroke="#22c55e" stroke-width="2"/>
+<line x1="522.0" y1="830.0" x2="517.0" y2="821.3" stroke="#22c55e" stroke-width="2"/>
+<line x1="522.0" y1="830.0" x2="527.0" y2="821.3" stroke="#22c55e" stroke-width="2"/>
+<rect x="120" y="830" width="530" height="50" rx="12" ry="12" fill="#c3fae8" stroke="#06b6d4" stroke-width="2" opacity="1.0"/>
+<text x="150" y="24.0" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#1e1e1e" text-anchor="start">How PyMC is used  —  Agent 2 (Estimator)</text>
+<text x="195" y="51.0" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#757575" text-anchor="start">agents/ranker.py - masked two-component Bayesian mixture, NUTS</text>
+<text x="175.0" y="112.1" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">INPUTS from Cognee</text>
+<text x="175.0" y="130.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">(written by the Detector)</text>
+<text x="175.0" y="149.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">X = signals that fired</text>
+<text x="175.0" y="168.4" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">M = applicability mask</text>
+<text x="550.0" y="102.8" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">PRIORS</text>
+<text x="550.0" y="121.5" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">pi ~ Beta(1,9)  (mules are rare)</text>
+<text x="550.0" y="140.2" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">phi_mule ~ Beta(4,1)</text>
+<text x="550.0" y="159.0" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">phi_legit ~ Beta(1,4)</text>
+<text x="550.0" y="177.8" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">fire-rates are LEARNED by the sampler</text>
+<text x="300" y="211.0" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#8b5cf6" text-anchor="start">THE KEY LINE</text>
+<text x="380.0" y="257.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">MASKED LIKELIHOOD  (per account, per class k)</text>
+<text x="380.0" y="276.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">ll_k = sum( M * [ X*log(phi_k) + (1-X)*log(1-phi_k) ] )</text>
+<text x="730.0" y="207.6" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">KEY: M zeroes</text>
+<text x="730.0" y="223.8" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">signals that</text>
+<text x="730.0" y="240.1" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">CANNOT fire -&gt;</text>
+<text x="730.0" y="256.3" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">treated as</text>
+<text x="730.0" y="272.6" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">missing, not as</text>
+<text x="730.0" y="288.8" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">innocence (sinks</text>
+<text x="730.0" y="305.1" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">stay confident,</text>
+<text x="730.0" y="321.3" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">AC-0012 stays</text>
+<text x="730.0" y="337.6" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">uncertain)</text>
+<text x="380.0" y="386.5" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">MIXTURE  via  pm.Potential</text>
+<text x="380.0" y="405.2" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">log_mix = [ log(pi)+ll_mule ,  log(1-pi)+ll_legit ]</text>
+<text x="380.0" y="424.0" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">Potential = sum( logsumexp(log_mix) )</text>
+<text x="730.0" y="365.9" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">logsumexp</text>
+<text x="730.0" y="382.2" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">marginalizes the</text>
+<text x="730.0" y="398.4" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">hidden class out</text>
+<text x="730.0" y="414.7" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">-&gt; smooth</text>
+<text x="730.0" y="430.9" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">gradient, so NUTS</text>
+<text x="730.0" y="447.2" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle">can sample it</text>
+<text x="380.0" y="518.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">pm.sample( NUTS / nutpie,</text>
+<text x="380.0" y="537.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">4 chains )</text>
+<text x="380.0" y="630.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">theta = P(mule | signals)  per account</text>
+<text x="380.0" y="649.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">FULL posterior, not a point estimate</text>
+<text x="237.5" y="750.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">p_mule</text>
+<text x="237.5" y="769.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">= posterior mean</text>
+<text x="522.5" y="750.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">94% credible interval</text>
+<text x="522.5" y="769.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">(_hdi94)</text>
+<text x="385.0" y="850.9" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">accreted onto the Case node in Cognee  -&gt;  Agent 3</text>
+<text x="385.0" y="869.6" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1e1e1e" text-anchor="middle">(Adjudicator)</text>
+</svg>
