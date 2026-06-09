@@ -22,10 +22,63 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import cognee_client as cognee
+import geodo_research
 
 log = logging.getLogger("reporter")
 
 RECONCILIATION_TOLERANCE = 0.01
+
+
+def _ring_signals(escalated_cases: list[dict]) -> list[str]:
+    """The decisive signals fired across the ring, most-common first."""
+    from collections import Counter
+    counts: Counter = Counter()
+    for c in escalated_cases:
+        counts.update(c.get("decisive_signals", []))
+    return [s for s, _ in counts.most_common()]
+
+
+def _precedent_block(precedents: list[dict]) -> str:
+    """Render the registry's matched precedents into the memo's PATTERN-CONTEXT
+    section. Every line traces to a real, verified source (Geodo research)."""
+    if not precedents:
+        return "  (no matching precedent on file)"
+    lines = []
+    for p in precedents:
+        lines.append(f"  • {p['relevance']}")
+        lines.append(f"        → {p['title']} [{p['citation']}]")
+    return "\n".join(lines)
+
+
+def _market_block(mc: dict | None) -> str:
+    """Render the Geo market-grounding block from the Domain Expert's MarketContext
+    (read from Cognee). Returns '' if the Domain Expert didn't run — the block then
+    simply disappears, proving it is the Domain Expert's contribution (graceful handoff)."""
+    if not mc:
+        return ""
+    sigs = mc.get("intent_signals") or []
+    top = sigs[0] if sigs else {}
+    rate = (mc.get("cost_basis") or {}).get("analyst_loaded_rate_usd_per_hr") or []
+    rate_str = f"${rate[0]}–${rate[1]}/hr" if len(rate) == 2 else "n/a"
+    roi = mc.get("roi") or {}
+    cap = roi.get("capacity_reclaimed_usd") or [0, 0]
+    roi_line = ""
+    if roi:
+        roi_line = (
+            f"Business case: averts ≥ ${roi.get('sar_penalty_floor_averted_usd', 0):,.0f} in "
+            f"SAR-failure penalty exposure (31 CFR floor) on ${roi.get('ring_exposure_usd', 0):,.2f} "
+            f"of reconstructed flow; decoy resistance reclaimed "
+            f"{roi.get('analyst_hours_reclaimed', 0)} analyst-hours "
+            f"(≈ ${cap[0]:,.0f}–${cap[1]:,.0f} at the Geo rate).\n")
+    return f"""
+━━━ MARKET CONTEXT (GEODO) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Who this protects: {mc.get('segment', 'n/a')}
+Operating reality: {mc.get('persona', 'n/a')}.
+Why now (real peer enforcement): {top.get('institution', 'n/a')} — {top.get('action', '')}
+        → {top.get('citation', '')} ({top.get('date', '')})
+Buyer thesis: {mc.get('buyer_thesis', '')}
+Analyst cost basis (Geo segment research): {rate_str} — sources C_FP / C_REV.
+{roi_line}"""
 
 
 def _llm_polish(prompt: str) -> str:
@@ -67,7 +120,8 @@ def _closing_rule(escalated_cases: list[dict]) -> str:
 
 
 def _build_memo(edges, escalated, review, decoys, dist_stats,
-                reconciled_total, closing_rule, generated_at) -> str:
+                reconciled_total, closing_rule, generated_at, precedents,
+                market_block="") -> str:
     ring_accts = sorted({e["sender"] for e in edges} | {e["receiver"] for e in edges})
 
     chain_rows = "\n".join(
@@ -127,21 +181,18 @@ arithmetic (see agent reasoning) — no bare scores.
 
 ━━━ HOW (TYPOLOGY) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Structuring (amounts held below the reporting floor) + Layering (funds moved
-through relay accounts to obscure origin) + Sink absorption. Consistent with
-FinCEN structuring advisories and FATF layering typologies.
+through relay accounts to obscure origin) + funnel-account absorption at the
+sinks. Consistent with FATF smurfing/layering typologies and the FinCEN
+funnel-account advisory (FIN-2014-A005).
 
-━━━ PATTERN CONTEXT (REAL-WORLD PRECEDENT) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This {len(ring_accts)}-account pattern is consistent with documented layering
-operations at community banks. Each observed signal maps to a real precedent:
-  • Circular account-to-account flow obscuring origin
-        → Liberty Reserve indictment (DOJ, 2013) — layering at scale.
-  • Amounts deliberately held below the monitoring floor (< $1,000)
-        → FinCEN structuring advisory FIN-2014-A005.
-  • Coordinated freshly-opened cohort acting as a pre-built transfer network
-        → FATF layering typology (account-cluster red flag).
-SAR filing obligation: $5,000 single / $25,000 aggregate 30-day exposure per
-account triggers a filing under 31 CFR § 1020.320; hub accounts exceed it.
-
+━━━ REGULATORY PRECEDENT (verified primary sources) ━━━━━━━━━━━━━━━━━━━━━━━━━━
+This {len(ring_accts)}-account pattern maps, signal by signal, to documented
+money-laundering precedents (each citation verified against its primary source):
+{_precedent_block(precedents)}
+Filing obligation: each transfer stays under $1,000, but the chains aggregate
+well past the $5,000 SAR floor of 31 CFR § 1020.320 — a SAR is required within
+30 days of detection.
+{market_block}
 ━━━ ABSTENTION — ROUTED TO HUMAN REVIEW ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {review_note}
 
@@ -150,6 +201,9 @@ account triggers a filing under 31 CFR § 1020.320; hub accounts exceed it.
 
 ━━━ CLOSING RULE (LEARNED ARTIFACT) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {closing_rule}
+
+━━━ DOMAIN REVIEW ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{geodo_research.review_line()}
 
 ━━━ SIGN-OFF ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Reviewed by: ___________________   Date: ___________   SAR filed: [ ] Y [ ] N [ ] Pending
@@ -182,20 +236,39 @@ def run(detector_result: Optional[dict] = None,
           f"({'OK' if ok else 'MISMATCH'}).")
 
     closing_rule = _closing_rule(escalated)
-    typology = "structuring + layering + relay"
+    typology = "structuring + layering + funnel-account absorption"
     generated_at = datetime.now(tz=timezone.utc)
 
-    memo_text = _build_memo(edges, escalated, review, decoys, dist_stats,
-                            reconciled_total, closing_rule, generated_at)
+    # Geodo research: the precedents that explain the signals this ring fired.
+    ring_precedents = geodo_research.precedents_for(_ring_signals(escalated))
+    _prog(f"Grounded the memo in {len(ring_precedents)} regulatory precedent(s).")
 
-    # Accrete reporter fields onto each escalated Case (final layer).
+    # Geo market grounding written by Agent 5 (Domain Expert); the block disappears
+    # gracefully if the Domain Expert didn't run — proving it is Agent 5's contribution.
+    market_context = cognee.read_market_context("QRM-2026-RING-001")
+    market_block = _market_block(market_context)
+    if market_context:
+        _prog("Attached MARKET CONTEXT (Geodo) from Cognee — Domain Expert handoff.")
+
+    memo_text = _build_memo(edges, escalated, review, decoys, dist_stats,
+                            reconciled_total, closing_rule, generated_at,
+                            ring_precedents, market_block=market_block)
+
+    # Accrete reporter fields onto each escalated Case (final layer). Each case
+    # carries the precedents matched to ITS decisive signals — provenance per
+    # decision, queryable through Cognee.
     for c in escalated:
         out_usd = round((c.get("signals") or {}).get("_transfer_usd", 0.0), 2)
+        case_citations = [
+            {"title": p["title"], "citation": p["citation"], "url": p["url"]}
+            for p in geodo_research.precedents_for(c.get("decisive_signals", []))
+        ]
         cognee.update_case_fields(c["account"], {
             "memo_ref": "QRM-2026-RING-001",
             "typology": typology,
             "dollar_contribution": out_usd,
             "closing_rule": closing_rule,
+            "citations": case_citations,
         })
 
     # Gemini polish is opt-in (it adds a network call); the template memo is

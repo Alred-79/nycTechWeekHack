@@ -1,0 +1,11 @@
+{
+  "tool": "geo_research",
+  "args": {
+    "query": "For a US community-bank BSA/AML team, what coordinated money-laundering pattern is hardest for rules-based monitoring to catch, and what recent peer enforcement makes fixing it urgent? Be specific."
+  },
+  "captured_on": "2026-06-09T13:49:59+00:00",
+  "response": {
+    "ok": true,
+    "answer": "### Coordinated Money-Laundering Pattern\n\n**Pattern: Structuring + Layering + Funnel-Account Absorption**\n\nThis involves:\n- **Structuring:** Breaking down large sums into smaller transfers to stay below regulatory thresholds.\n- **Layering:** Using multiple transactions across various accounts to obscure the money trail.\n- **Funnel-Account Absorption:** Employing a network of accounts (often opened recently) to make a series of small, below-threshold transfers, eventually consolidating the funds into a few accounts. This process hides the orchestration and source of the funds.\n\n**Decisive Signals Indicative of This Pattern:**\n- Sub-threshold account-to-account transfers (<$1,000 each)\n- Accounts showing no merchant spend despite frequent account-to-account activity\n- High frequency of transfers to one counterparty\n- Accounts opened in recent outlier cohorts\n\n### Recent Peer Enforcement\n\n**Case: Community Federal Savings Bank (NY) \u2014 OCC Consent Order (AA-ENF-2025-21):**\n\n- **Issue:** The bank experienced rapid payment processor growth without commensurate controls.\n- **Regulatory Action:** The OCC ordered a risk-based Suspicious Activity Report (SAR) review program and a SAR lookback for previously unreported suspicious activities.\n\n**Implication for BSA/AML Teams:**\n- The peer enforcement highlights the urgent necessity for banks to adopt more sophisticated detection mechanisms. Traditional rules engines often miss patterns like the one above because they rely heavily on predefined thresholds and simple transaction monitoring, which can be easily circumvented by well-coordinated laundering schemes.\n\nIncorporating AI-driven solutions like Quorum, specialized in identifying these complex patterns, can effectively mitigate the risk of regulatory penalties and reputational damage. By using AI to catch coordinated rings and producing regulator-ready SAR memos, banks improve compliance and reduce false-positive flooding, which can burden analysts."
+  }
+}

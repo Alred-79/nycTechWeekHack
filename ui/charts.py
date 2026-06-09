@@ -9,17 +9,21 @@ from __future__ import annotations
 
 import plotly.graph_objects as go
 
-C = {"ring": "#ff4d6d", "review": "#ffb020", "decoy": "#8b93b5",
-     "clear": "#2ee6a6", "noise": "#46548a", "money": "#ffd23f",
-     "violet": "#7c5cff", "cyan": "#22d3ee",
-     "ink": "#e8ecfb", "grid": "rgba(255,255,255,0.07)",
-     "bg": "#121a3a", "panel": "#19224a"}
+C = {"ring": "#ff5468", "review": "#f7b733", "decoy": "#8a93a6",
+     "clear": "#34d6a4", "noise": "#46527a", "money": "#5fd0e0",
+     "violet": "#8ab4ff", "cyan": "#5fd0e0",
+     "ink": "#e7ebf3", "grid": "rgba(178,198,234,0.08)",
+     "bg": "#0a0c11", "panel": "#0f131b"}
+
+_FONT = "IBM Plex Mono, ui-monospace, monospace"
 
 
 def _dark(fig: go.Figure, h: int = 360, title: str = "") -> go.Figure:
     fig.update_layout(
-        title=title, height=h, paper_bgcolor=C["bg"], plot_bgcolor=C["bg"],
-        font=dict(color=C["ink"], size=12), margin=dict(l=20, r=20, t=46, b=20),
+        title=dict(text=title, font=dict(size=13, color="#8a93a6")),
+        height=h, paper_bgcolor=C["bg"], plot_bgcolor=C["bg"],
+        font=dict(color=C["ink"], size=12, family=_FONT),
+        margin=dict(l=20, r=20, t=46, b=20),
         legend=dict(orientation="h", y=1.06, x=0, bgcolor="rgba(0,0,0,0)"),
     )
     fig.update_xaxes(gridcolor=C["grid"], zeroline=False)

@@ -23,7 +23,7 @@ logging.basicConfig(
 log = logging.getLogger("ringfence")
 
 
-_STAGES = ["detector", "estimator", "adjudicator", "reporter"]
+_STAGES = ["detector", "estimator", "adjudicator", "domain_expert", "reporter"]
 
 
 def run_pipeline(csv_path: str, through: str = "reporter", mirror_cognee: bool = False) -> dict:
@@ -35,7 +35,7 @@ def run_pipeline(csv_path: str, through: str = "reporter", mirror_cognee: bool =
     adjudicator → reporter).
     """
     import cognee_client as cognee
-    from agents import investigator, narrator, ranker, scout
+    from agents import domain_expert, investigator, narrator, ranker, scout
     from db import queries
 
     stop_at = _STAGES.index(through)
@@ -80,6 +80,14 @@ def run_pipeline(csv_path: str, through: str = "reporter", mirror_cognee: bool =
         con, detector_result=detector_result,
         on_progress=lambda m: log.info("  %s", m))
     if stop_at == 2:
+        return _finish(result, t0, cognee, mirror_cognee)
+
+    # ── Agent 5: Domain Expert (Geo market grounding) ─────────────────────────
+    log.info("\n── AGENT 5: DOMAIN EXPERT (Geo) ────────────────────────────")
+    result["domain_expert"] = domain_expert.run(
+        detector_result=detector_result,
+        on_progress=lambda m: log.info("  %s", m))
+    if stop_at == 3:
         return _finish(result, t0, cognee, mirror_cognee)
 
     # ── Agent 4: Reporter ─────────────────────────────────────────────────────

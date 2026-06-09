@@ -1,0 +1,31 @@
+{
+  "tool": "geo_list_documents",
+  "args": {},
+  "captured_on": "2026-06-09T13:49:51+00:00",
+  "response": {
+    "ok": true,
+    "documents": [
+      {
+        "id": "25b5b9b8-5b49-40bb-b1bf-0642cc29a822",
+        "file_name": "Quorum detection brief \u2014 QRM-2026-RING-001",
+        "uploaded_at": "2026-06-09T13:49:50.801+00:00"
+      },
+      {
+        "id": "3b92cb07-6532-41d7-94cb-f68b2fd1f201",
+        "file_name": "Quorum detection brief \u2014 QRM-2026-RING-001",
+        "uploaded_at": "2026-06-09T13:47:45.062+00:00"
+      },
+      {
+        "id": "5f9c305d-a2d0-4021-b087-68188125f153",
+        "file_name": "Quorum detection brief \u2014 QRM-2026-RING-001",
+        "uploaded_at": "2026-06-09T13:45:05.861+00:00"
+      },
+      {
+        "id": "8e19849f-0dec-4c28-a3b2-b087adb6ef2d",
+        "file_name": "Quorum detection brief \u2014 QRM-2026-RING-001",
+        "uploaded_at": "2026-06-09T05:04:20.719+00:00"
+      }
+    ],
+    "count": 4
+  }
+}

@@ -39,7 +39,7 @@ class Case:
       After Agent 3 (Adjudicator): + action, E_loss_escalate, E_loss_clear,
                                      EVPI, quorum, decisive_signals
       After Agent 4 (Reporter):    + memo_ref, typology, dollar_contribution,
-                                     closing_rule
+                                     closing_rule, citations
     """
     account: str
 
@@ -70,5 +70,32 @@ class Case:
     typology: Optional[str] = None
     dollar_contribution: Optional[float] = None
     closing_rule: Optional[str] = None
+    citations: list = field(default_factory=list)  # Geodo precedents matched to this case
 
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class MarketContext:
+    """
+    Ring-level market grounding written by Agent 5 (Domain Expert) and consumed by
+    Agent 4 (Reporter) via Cognee — the Geo handoff. One per ring (keyed by ring_ref).
+
+    It carries who Quorum protects (segment + persona, from Geo's GTM Researcher), the
+    real-buyer thesis, the labor-cost basis behind C_FP/C_REV, and — crucially — the
+    `intent_signals`: real, dated SAR-failure enforcement actions matched to THIS ring's
+    decisive signals. The top match is the memo's "why now" and (Tier 2) the outreach hook.
+    """
+    ring_ref: str
+    segment: str = ""
+    persona: str = ""
+    asset_range: str = ""
+    buyer_thesis: str = ""
+    intent_signals: list = field(default_factory=list)   # matched enforcement actions
+    cost_basis: dict = field(default_factory=dict)        # Geo labor-rate basis for C_FP/C_REV
+    roi: dict = field(default_factory=dict)               # business case: Geo rate × this run's actuals
+    research_excerpt: str = ""                             # short geo_research narrative (optional)
+    messaging_angles: dict = field(default_factory=dict)   # persona → value-prop (Geo GTM Researcher)
+    source: str = "Geo (geodo.ai MCP)"
+    captured_on: str = ""
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

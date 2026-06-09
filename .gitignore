@@ -1,6 +1,10 @@
 .env
+.geo_token
+_geo_profile.json
+geo_cache/contacts_*.json
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
-.streamlit/
+.streamlit/secrets.toml
+sample.txt

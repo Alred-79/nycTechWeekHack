@@ -51,13 +51,13 @@ def test_boundary_routed_to_review(run_result):
     c = cases[gt.BOUNDARY]
     assert c["action"] == "REVIEW"
     lo, hi = c["credible_interval"]
-    assert lo < gt.tau() < hi          # the abstention is justified by a straddling interval
+    assert lo < gt.tau() < hi
     assert c["EVPI"] > investigator.C_REV
 
 
 def test_caseload(run_result):
     result, _ = run_result
-    assert result["escalate_count"] + result["review_count"] <= 12
+    assert (result["escalate_count"] + result["review_count"]) <= 12
     assert result["clear_ratio"] > 0.95
 
 
@@ -66,4 +66,4 @@ def test_decisions_are_explained(run_result):
     for acc in gt.RING_ACCOUNTS | gt.DECOYS | {gt.BOUNDARY}:
         c = cases[acc]
         for fld in ("E_loss_escalate", "E_loss_clear", "EVPI", "action_reason"):
-            assert c.get(fld) is not None and c.get(fld) != "", f"{acc} missing {fld}"
+            assert c.get(fld) is not None and c.get(fld) != ""

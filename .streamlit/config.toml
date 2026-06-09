@@ -1,0 +1,14 @@
+# Quorum — "Forensic Terminal" theme
+# Near-black warm ink; color is reserved for decisions only.
+[theme]
+base = "dark"
+primaryColor = "#5fd0e0"             # ice-cyan chrome accent (focus / active)
+backgroundColor = "#0a0c11"          # ink
+secondaryBackgroundColor = "#0f131b" # panel
+textColor = "#e7ebf3"
+font = "monospace"
+
+[server]
+headless = true
+runOnSave = true
+enableStaticServing = true   # serve ui/static/* (the standalone constellation HTML)

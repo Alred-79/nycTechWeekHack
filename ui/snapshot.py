@@ -53,7 +53,11 @@ def build(csv_path: str | Path = DEFAULT_CSV) -> dict:
     """Run the pipeline and return a fully JSON-safe, view-ready result dict."""
     import duckdb
     import cognee_client as cognee
-    from agents import investigator, narrator, ranker, scout
+    import geo_client
+    import geodo_market
+    import geodo_research
+    import gtm
+    from agents import domain_expert, investigator, narrator, ranker, scout
     from db import queries
     from ui.graph_data import build_graph, funnel_counts
 
@@ -62,13 +66,24 @@ def build(csv_path: str | Path = DEFAULT_CSV) -> dict:
     detector = scout.run(con)
     ranker.run()
     adjudicator = investigator.run(con, detector_result=detector)
+    domain_expert.run(detector_result=detector)        # Agent 5 — Geo market grounding
     reporter = narrator.run(detector_result=detector)
     cases = cognee.read_cases(candidates_only=True)
+    market_context = cognee.read_market_context(domain_expert.RING_REF)
+
+    # Tier 2 — Ring → Real Buyers GTM packet (cache-first/offline; gated, nothing sent).
+    try:
+        gtm_packet = gtm.run(live=False)
+    except Exception as exc:   # noqa: BLE001 — GTM is an add-on, never blocks the snapshot
+        gtm_packet = None
+
+    # Geo live-connection proof (read from cached fixtures; None until a `--live` capture ran).
+    geo_connection = geo_client.connection_proof()
 
     n_total = detector["dist_stats"].get("n_accounts_total", 0)
     ring_accounts = {c["account"] for c in cases if c.get("action") == "ESCALATE"}
-    total_volume = float(con.execute("SELECT SUM(amount) FROM transactions").fetchone()[0] or 0)
-    total_txns = int(con.execute("SELECT COUNT(*) FROM transactions").fetchone()[0] or 0)
+    total_volume = float((con.execute("SELECT SUM(amount) FROM transactions").fetchone() or (0,))[0] or 0)
+    total_txns = int((con.execute("SELECT COUNT(*) FROM transactions").fetchone() or (0,))[0] or 0)
 
     return {
         "prebuilt": True,
@@ -95,6 +110,11 @@ def build(csv_path: str | Path = DEFAULT_CSV) -> dict:
             "typology": reporter.get("typology", ""),
             "closing_rule": reporter.get("closing_rule", ""),
         },
+        "geodo": geodo_research.summary(),
+        "geo_market": geodo_market.summary(),
+        "market_context": market_context,   # carries the run-specific ROI (Geo rate × actuals)
+        "gtm": gtm_packet,                   # Tier 2 — Ring → Real Buyers packet (redacted)
+        "geo_connection": geo_connection,    # live-MCP proof badge (None until a --live capture)
         "cases": cases,
         "dist_stats": detector["dist_stats"],
         "counts": funnel_counts(cases, n_total),
@@ -105,14 +125,18 @@ def build(csv_path: str | Path = DEFAULT_CSV) -> dict:
 
 
 STANDALONE_HTML = ROOT / "ui" / "quorum_constellation.html"
+STATIC_HTML = ROOT / "ui" / "static" / "quorum_constellation.html"  # served by the app
 
 
 def save(csv_path: str | Path = DEFAULT_CSV, out: str | Path = SNAPSHOT_PATH) -> Path:
     snap = build(csv_path)
     Path(out).write_text(json.dumps(snap, default=str))
-    # also emit the standalone, double-click-openable interactive graph
+    # also emit the standalone, double-click-openable interactive graph — both as a
+    # loose file and into the served static dir the app links to.
     from ui import ring_graph
     ring_graph.write_html(snap["graph"], STANDALONE_HTML, height=860)
+    STATIC_HTML.parent.mkdir(exist_ok=True)
+    ring_graph.write_html(snap["graph"], STATIC_HTML, height=860)
     return Path(out)
 
 
@@ -127,7 +151,7 @@ if __name__ == "__main__":
     import sys
     csv = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_CSV
     out = save(csv)
-    snap = load(out)
+    snap = load(out) or {}
     print(f"Snapshot written → {out}")
     print(f"Standalone graph → {STANDALONE_HTML}")
     print(f"  cases={len(snap['cases'])}  graph_nodes={len(snap['graph']['nodes'])} "

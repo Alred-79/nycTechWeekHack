@@ -12,7 +12,7 @@ import pytest
 
 import cognee_client as cognee
 import quorum_truth as gt
-from agents import investigator, narrator, ranker, scout
+from agents import domain_expert, investigator, narrator, ranker, scout
 from db import queries
 
 CSV = "data/track02_fraud_watch.csv"
@@ -46,10 +46,16 @@ def test_fields_accrete_across_the_pipeline(con):
     assert after_adjudicate.get("action") is not None  # NOW present
     assert after_adjudicate.get("memo_ref") is None    # Reporter hasn't run
 
+    # ── After Agent 5 (Domain Expert) ──────────────────────────────────────
+    domain_expert.run(detector_result=detector)
+    assert cognee.read_market_context(domain_expert.RING_REF) is not None  # Geo grounding written
+    assert cognee.read_case(PROBE).get("memo_ref") is None                 # Reporter still hasn't run
+
     # ── After Agent 4 (Reporter) ───────────────────────────────────────────
     narrator.run(detector_result=detector)
     after_report = cognee.read_case(PROBE)
     assert after_report.get("memo_ref") is not None    # final layer present
+    assert after_report.get("citations")               # Geodo precedents attached
 
 
 def test_estimator_depends_on_detector_signals(con):

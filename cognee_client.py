@@ -134,6 +134,22 @@ def update_case_fields(account: str, fields: dict) -> None:
     log.info("COGNEE CASE UPDATE  account=%s  fields=%s", account, list(fields.keys()))
 
 
+def _market_entity_id(ring_ref: str) -> str:
+    """Deterministic Cognee id for a ring's MarketContext (the Geo grounding layer)."""
+    return f"MarketContext::{ring_ref}"
+
+
+def write_market_context(mc) -> str:
+    """Agent 5 (Domain Expert) writes the ring-level Geo market grounding to Cognee."""
+    payload = _serialize(mc)
+    return _store.write("MarketContext", _market_entity_id(mc.ring_ref), payload)
+
+
+def read_market_context(ring_ref: str) -> Optional[dict]:
+    """Agent 4 (Reporter) reads the Geo market grounding — the provable handoff."""
+    return _store.read_by_id(_market_entity_id(ring_ref))
+
+
 def get_store_summary() -> dict:
     all_entities = list(_store._data.values())
     by_type: dict[str, int] = {}
@@ -185,6 +201,7 @@ def _case_to_text(c: dict) -> str:
         f"Decisive signals: {', '.join(c.get('decisive_signals') or []) or 'none'}. "
         f"Decoy suspect: {c.get('decoy_suspect')}. "
         f"Typology: {c.get('typology') or 'n/a'}. "
+        f"Precedents: {', '.join(ct.get('citation', '') for ct in (c.get('citations') or [])) or 'n/a'}. "
         f"Reasoning: {c.get('action_reason') or c.get('detect_reason')}"
     )
 
@@ -260,6 +277,7 @@ def finish_build() -> dict:
         import cognee
 
         async def _flush() -> dict:
+            cognee.config.system_root_directory(str(Path.home() / ".quorum_cognee"))
             await cognee.prune.prune_data()
             await cognee.prune.prune_system(metadata=True)
             for agent, text in layers:                       # one add() per agent
@@ -307,6 +325,7 @@ def cognee_search(query: str):
         import asyncio
         _configure_cognee_env()
         import cognee
+        cognee.config.system_root_directory(str(Path.home() / ".quorum_cognee"))
         return asyncio.run(cognee.search(query))
     except Exception as exc:   # noqa: BLE001
         log.warning("COGNEE SDK search failed: %s", exc)

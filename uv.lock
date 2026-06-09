@@ -1187,6 +1187,7 @@ dependencies = [
     { name = "pymc" },
     { name = "python-dotenv" },
     { name = "streamlit" },
+    { name = "watchdog" },
 ]
 
 [package.dev-dependencies]
@@ -1207,6 +1208,7 @@ requires-dist = [
     { name = "pymc", specifier = ">=6.0.1" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "streamlit", specifier = ">=1.58.0" },
+    { name = "watchdog", specifier = ">=6.0.0" },
 ]
 
 [package.metadata.requires-dev]

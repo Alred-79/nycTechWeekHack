@@ -1,0 +1,12 @@
+# Slim deploy set — exactly what the Streamlit demo imports at boot.
+# The snapshot-driven UI renders all 7 tabs + the constellation from these alone.
+# The heavy inference stack (pymc, nutpie, arviz, cognee, groq) is lazy-imported
+# only by the live "upload a CSV & run" path, so it is intentionally NOT installed
+# here — that keeps the cloud build fast and avoids compiling PyMC on the host.
+# Full local dev still uses pyproject.toml / uv (which pins the complete stack).
+streamlit>=1.58.0
+pandas>=3.0.3
+matplotlib>=3.10.9
+plotly>=6.8.0
+duckdb>=1.5.3
+python-dotenv>=1.2.2

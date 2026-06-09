@@ -1,0 +1,6 @@
+{
+  "tool": "geo_add_document",
+  "response": {
+    "ok": true
+  }
+}

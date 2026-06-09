@@ -12,7 +12,7 @@ import pytest
 
 import cognee_client as cognee
 import quorum_truth as gt
-from agents import investigator, narrator, ranker, scout
+from agents import domain_expert, investigator, narrator, ranker, scout
 from db import queries
 
 CSV = "data/track02_fraud_watch.csv"
@@ -25,6 +25,7 @@ def run_result():
     detector = scout.run(con)
     ranker.run()
     investigator.run(con, detector_result=detector)
+    domain_expert.run(detector_result=detector)     # Agent 5 — Geo market grounding
     reporter = narrator.run(detector_result=detector)
     cases = {c["account"]: c for c in cognee.read_cases()}
     return reporter, cases
@@ -75,3 +76,32 @@ def test_escalated_cases_have_reporter_fields(run_result):
         assert c.get("memo_ref")
         assert c.get("typology")
         assert c.get("closing_rule")
+
+
+def test_escalated_cases_carry_geodo_citations(run_result):
+    """Agent 4 attaches verified precedents to each escalated Case (provenance)."""
+    _, cases = run_result
+    for acc in gt.RING_ACCOUNTS:
+        cites = cases[acc].get("citations")
+        assert cites, f"{acc} missing Geodo citations"
+        assert all(ct.get("citation") for ct in cites)
+
+
+def test_memo_sar_threshold_is_accurate(run_result):
+    """The memo must cite the correct §1020.320 $5,000 SAR floor — not the old
+    fabricated '$25,000 aggregate' figure, and not the mislabelled FIN-2014-A005."""
+    reporter, _ = run_result
+    memo = reporter["memo_text"]
+    assert "$5,000" in memo
+    assert "$25,000" not in memo
+    assert "31 CFR § 1020.320" in memo
+    assert "structuring advisory FIN-2014-A005" not in memo
+
+
+def test_memo_has_geo_market_context(run_result):
+    """Agent 5's MarketContext flows through Cognee into the memo (the Geo handoff)."""
+    reporter, _ = run_result
+    memo = reporter["memo_text"]
+    assert "MARKET CONTEXT (GEODO)" in memo
+    assert "Why now" in memo                           # the dated peer-enforcement hook
+    assert "REGULATORY PRECEDENT" in memo              # precedents relabelled off "Geodo"

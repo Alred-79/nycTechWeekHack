@@ -1,0 +1,14 @@
+{
+  "tool": "geo_compile_flow_spec",
+  "args": {
+    "goal": "Book a 20-minute walkthrough of Quorum's AML triage with a sample SAR memo.",
+    "channel": "gmail",
+    "icp_hint": "BSA Officers / AML Analysts / CCOs at US community banks & credit unions ($1\u201350B)"
+  },
+  "captured_on": "2026-06-09T13:50:06+00:00",
+  "response": {
+    "ok": false,
+    "error": "description_required",
+    "message": "Provide a natural-language description of the flow."
+  }
+}

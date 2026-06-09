@@ -18,12 +18,12 @@ import duckdb
 
 # Semantic palette — kept identical across every visual in the app.
 COLORS = {
-    "ring": "#ff4d6d",      # ESCALATE — confirmed mule
-    "review": "#ffb020",    # REVIEW   — abstention / uncertain
-    "decoy": "#8b93b5",     # CLEAR    — planted device decoy
-    "clear": "#2ee6a6",     # CLEAR    — other
-    "clean": "#39477e",     # never surfaced (noise)
-    "category": "#5a6bb0",  # merchant-category hub
+    "ring": "#ff5468",      # ESCALATE — confirmed mule
+    "review": "#f7b733",    # REVIEW   — abstention / uncertain
+    "decoy": "#8a93a6",     # CLEAR    — planted device decoy
+    "clear": "#34d6a4",     # CLEAR    — other
+    "clean": "#2b3550",     # never surfaced (noise)
+    "category": "#46527a",  # merchant-category hub
 }
 
 

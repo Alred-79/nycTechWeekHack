@@ -1,0 +1,11 @@
+{
+  "tool": "geo_research",
+  "args": {
+    "query": "For a US community-bank BSA/AML team, what coordinated money-laundering pattern is hardest for rules-based monitoring to catch, and what recent peer enforcement makes fixing it urgent? Be specific."
+  },
+  "captured_on": "2026-06-09T13:49:50+00:00",
+  "response": {
+    "ok": true,
+    "answer": "Rules-based monitoring systems often struggle to catch complex, coordinated money-laundering patterns because they rely on predefined scenarios and thresholds that don't easily adapt to sophisticated schemes. One particularly challenging pattern for these systems is the **structuring + layering + funnel-account absorption** ring. This involves:\n\n- **Structuring**: Breaking down large amounts into smaller, sub-threshold transfers to avoid detection.\n- **Layering**: Creating a complex layer of transactions across multiple accounts to obfuscate the source and destination of funds.\n- **Funnel-Account Absorption**: Using accounts with multiple incoming transactions that don\u2019t match outgoing transactions (e.g., no merchant spend), making it difficult to discern legitimate versus illegitimate activity.\n\nThe key signals in this pattern include:\n- Frequent, small AC\u2192AC (account-to-account) transfers, each below $1,000.\n- Accounts in a recent cohort with no merchant activity despite numerous account-to-account transactions.\n- A high number of transfers to a single counterparty.\n\nIn terms of peer enforcement, the **Community Federal Savings Bank (NY)** was recently subject to an OCC consent order (AA-ENF-2025-21), highlighting the urgency. They faced issues with their payment-processor growth outpacing their control measures and were ordered to implement a risk-based SAR (Suspicious Activity Report) review program along with a SAR lookback for previously unreported suspicious activities. This example underscores the critical need for improved detection systems like Quorum's to prevent such regulatory challenges. \n\nThe combination of these laundering patterns and peer enforcement actions makes it urgent for similar institutions to reevaluate their current systems and consider solutions that can adaptively learn from these signals and provide regulator-ready documentation."
+  }
+}

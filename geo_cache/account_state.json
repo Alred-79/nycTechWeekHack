@@ -1,0 +1,83 @@
+{
+  "tool": "geo_get_account_state",
+  "args": {},
+  "captured_on": "2026-06-09T13:49:42+00:00",
+  "response": {
+    "ok": true,
+    "user_id": "7c18159f-4238-41ef-9e3b-23f5be2f72c7",
+    "credits": {
+      "ok": true,
+      "unlimited": true,
+      "source": "credit_trial",
+      "standard": {
+        "balance": 0,
+        "total_purchased": 0,
+        "total_used": 0,
+        "in_debt": false
+      },
+      "enterprise": {
+        "balance": 0
+      }
+    },
+    "connections": {
+      "gmail": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "outlook": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "agentmail": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "linkedin": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "instagram": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "twitter": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "substack": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "reddit": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "facebook": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "facebook_messenger": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      },
+      "gmail_read": {
+        "connected": false,
+        "account": null,
+        "accounts": []
+      }
+    },
+    "campaigns": {
+      "active_or_paused_or_stopped_count": 0
+    }
+  }
+}

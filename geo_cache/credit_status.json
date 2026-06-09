@@ -1,0 +1,19 @@
+{
+  "tool": "geo_get_credit_status",
+  "args": {},
+  "captured_on": "2026-06-09T13:49:43+00:00",
+  "response": {
+    "ok": true,
+    "unlimited": true,
+    "source": "credit_trial",
+    "standard": {
+      "balance": 0,
+      "total_purchased": 0,
+      "total_used": 0,
+      "in_debt": false
+    },
+    "enterprise": {
+      "balance": 0
+    }
+  }
+}

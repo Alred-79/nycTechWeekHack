@@ -1,0 +1,69 @@
+{
+  "tool": "geo_propose_campaign",
+  "args": {
+    "channel": "gmail",
+    "goal": "Book a 20-minute walkthrough showing how Quorum catches coordinated money-laundering mule rings that rules-based transaction monitoring misses, with a sample SAR memo on the prospects own alert backlog.",
+    "icp_hint": "BSA Officers, AML Analysts, Chief Compliance Officers at US community banks and credit unions ($1-50B assets)",
+    "contact_count": 3,
+    "timezone": "America/New_York"
+  },
+  "response": {
+    "ok": true,
+    "next_share_hint": "After the user reviews this, offer a shareable card with geo_share_campaign.",
+    "channel": "gmail",
+    "goal": "Book a 20-minute walkthrough showing how Quorum catches coordinated money-laundering mule rings that rules-based transaction monitoring misses, with a sample SAR memo on the prospects own alert backlog.",
+    "icp_hint": "BSA Officers, AML Analysts, Chief Compliance Officers at US community banks and credit unions ($1-50B assets)",
+    "proposed_contacts": [
+      {
+        "name": "Alain Bergeron",
+        "title": "Chief Executive Officer and Chief Investment Officer",
+        "company": "iA Global Asset Management",
+        "email": "alain.bergeron@ia.ca",
+        "linkedin": "http://www.linkedin.com/in/bergeronalain",
+        "phone": "",
+        "phone_type": "",
+        "_source_strategy": "enriched_pool_fts",
+        "_match_score": 0.0177312
+      },
+      {
+        "name": "Robert Edwards",
+        "title": "Chief Executive Officer, Chief Investment Officer",
+        "company": "Edwards Asset Management",
+        "email": "redwards@edwardsasset.com",
+        "linkedin": "http://www.linkedin.com/in/bob-edwards-eam",
+        "phone": "",
+        "phone_type": "",
+        "_source_strategy": "enriched_pool_fts",
+        "_match_score": 0.0177312
+      },
+      {
+        "name": "Craig Rosenthal",
+        "title": "Chief Legal Officer and Chief Compliance Officer",
+        "company": "BellRing Brands, Inc.",
+        "email": "craig.rosenthal@bellringbrands.com",
+        "linkedin": "http://www.linkedin.com/in/craig-rosenthal-09ba903",
+        "phone": "",
+        "phone_type": "",
+        "_source_strategy": "enriched_pool_fts",
+        "_match_score": 0.0177312
+      }
+    ],
+    "contacts_error": null,
+    "contacts_source": "enriched_pool",
+    "suggested_schedule": {
+      "contacts_per_day": 10,
+      "active_days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "start_hour": 9,
+      "end_hour": 17,
+      "timezone": "America/New_York"
+    },
+    "credit_decision": null,
+    "note": "This is a PROPOSAL ONLY \u2014 nothing has been created or launched. Now draft 3 personalized opener messages (one per proposed contact) referencing real fields from each contact \u2014 no placeholders. Show the user all proposed contacts, all drafts, and the suggested schedule, then WAIT for explicit approval. On approval, call geo_create_campaign (it will ask for confirmation, which the user has now given) with the channel, goal/icp, schedule, and personalization."
+  }
+}
