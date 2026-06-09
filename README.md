@@ -20,7 +20,7 @@
 
 <!-- Once your app is live, replace the link below with your https://<name>.streamlit.app URL -->
 <p align="center">
-  <a href="https://share.streamlit.io/deploy?repository=Alred-79/nycTechWeekHack&branch=main&mainModule=ui/app.py">
+  <a href="[https://share.streamlit.io/deploy?repository=Alred-79/nycTechWeekHack&branch=main&mainModule=ui/app.py](https://quorum-aml.streamlit.app/)">
     <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit">
   </a>
 </p>
