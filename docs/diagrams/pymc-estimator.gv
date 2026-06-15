@@ -1,0 +1,85 @@
+// Conceptual data-flow for Agent 2 (Estimator) — the polished replacement for the
+// old hand-drawn Excalidraw figure. Rendered with the graphviz `dot` binary:
+//   dot -Tpng -Gdpi=200 docs/diagrams/pymc-estimator.gv -o docs/diagrams/pymc-estimator.png
+//
+// Reads top-to-bottom: inputs from Cognee + Beta priors → masked likelihood →
+// logsumexp mixture (Potential) → NUTS sampling → posterior theta → the three
+// fields written back onto the Case node for Agent 3. Side notes carry the three
+// pieces of real Bayesian engineering. Palette matches the README badges.
+digraph estimator {
+  bgcolor="#0a0c11";
+  rankdir=TB; splines=ortho; nodesep=0.45; ranksep=0.55;
+  fontname="Helvetica"; fontcolor="#e8eefc"; fontsize=22; labelloc="t";
+  label="\nAgent 2 · ESTIMATOR — masked two-component Bayesian mixture (PyMC / NUTS)\nagents/ranker.py · the class-conditional fire-rates are LEARNED, not asserted\n";
+
+  node [fontname="Helvetica", fontcolor="#e8eefc", penwidth=1.8,
+        style="filled,rounded", shape=box, margin="0.20,0.12", fontsize=13];
+  edge [penwidth=1.6, arrowsize=0.8];
+
+  // ---- inputs (cyan) ----
+  inputs [label="INPUTS from Cognee  (written by the Detector)\nX — signal matrix  ·  M — applicability mask",
+          color="#5fd0e0", fillcolor="#0e3a44"];
+
+  // ---- priors (blue) ----
+  priors [label="PRIORS  (domain knowledge, identifiability-pinning)\nphi_mule ~ Beta(4,1)   ·   phi_legit ~ Beta(1,4)   ·   pi ~ Beta(1,9)",
+          color="#8ab4ff", fillcolor="#16294f"];
+
+  // ---- masked likelihood (purple) ----
+  lik [label="MASKED LIKELIHOOD  (per account, per class k)\nll_k = Σ  M · [ X·log(φ_k) + (1−X)·log(1−φ_k) ]",
+       color="#b794ff", fillcolor="#2e1b54"];
+
+  // ---- mixture (amber) ----
+  mix [label="MIXTURE via pm.Potential\nlog_mix = [ log π + ll_mule ,  log(1−π) + ll_legit ]\nPotential = Σ logsumexp(log_mix)",
+       color="#f7b733", fillcolor="#4a3410"];
+
+  // ---- sampler (green, oval) ----
+  samp [label="pm.sample(  NUTS / nutpie  ·  4 chains  ·  target_accept 0.95  )",
+        color="#34d6a4", fillcolor="#123a2c", shape=ellipse, style="filled"];
+
+  // ---- posterior (magenta) ----
+  theta [label="theta = P(mule | signals)  per account\na FULL posterior — not a point estimate",
+         color="#ff7ad9", fillcolor="#4a1640"];
+
+  // ---- outputs (green) ----
+  outP  [label="p_mule\nposterior mean", color="#34d6a4", fillcolor="#123a2c"];
+  outCI [label="94% credible interval\n(_hdi94)", color="#34d6a4", fillcolor="#123a2c"];
+  outC  [label="signal_contributions\nlearned log Bayes factor / signal", color="#34d6a4", fillcolor="#123a2c"];
+
+  // ---- handoff (cyan) ----
+  cog [label="accreted onto the Case node in Cognee  →  Agent 3 (Adjudicator)",
+       color="#5fd0e0", fillcolor="#0e3a44"];
+
+  // ---- side notes (dashed) ----
+  nMask  [label="Missing ≠ innocent.  M zeroes signals that\nCANNOT structurally fire (a pure sink never\noriginates) — counted as missing, not evidence.\nSinks stay confident; the lone ambiguous account\ncomes back honestly uncertain.",
+          color="#b794ff", fillcolor="#1c2230", style="filled,dashed", fontsize=11, fontcolor="#d8d2ff"];
+  nLse   [label="logsumexp marginalizes the discrete latent\nclass analytically — NUTS can't sample it, so it\nis integrated out in log-space and fed to\npm.Potential as an exact marginal likelihood.",
+          color="#f7b733", fillcolor="#1c2230", style="filled,dashed", fontsize=11, fontcolor="#ffe9bf"];
+  nDecoy [label="Skeptical decoy prior.  device_shared gets the\nSAME weak prior in both classes — non-\ndiscriminating by construction, so the planted\ndecoy can't be driven to a flag.",
+          color="#8ab4ff", fillcolor="#1c2230", style="filled,dashed", fontsize=11, fontcolor="#d6e3ff"];
+
+  // ---- main flow ----
+  inputs -> lik   [color="#5fd0e0"];
+  priors -> lik   [color="#8ab4ff"];
+  lik    -> mix   [color="#b794ff", label="  ll_mule, ll_legit", fontcolor="#cdbcff", fontsize=11];
+  priors -> mix   [color="#8ab4ff", style=dashed, label="  π", fontcolor="#cfe0ff", fontsize=11];
+  mix    -> samp  [color="#f7b733"];
+  samp   -> theta [color="#34d6a4", label="  pm.Deterministic", fontcolor="#9fe9cf", fontsize=11];
+  theta  -> outP  [color="#ff7ad9"];
+  theta  -> outCI [color="#ff7ad9"];
+  theta  -> outC  [color="#ff7ad9"];
+  outP   -> cog   [color="#34d6a4"];
+  outCI  -> cog   [color="#34d6a4"];
+  outC   -> cog   [color="#34d6a4"];
+
+  // ---- note attachments ----
+  edge [style=dotted, arrowhead=none, penwidth=1.0];
+  nDecoy -> priors [color="#8ab4ff"];
+  nMask  -> lik    [color="#b794ff"];
+  nLse   -> mix    [color="#f7b733"];
+
+  // ---- rank hints to keep notes beside their targets ----
+  { rank=same; nDecoy; priors; }
+  { rank=same; nMask; lik; }
+  { rank=same; nLse; mix; }
+  { rank=same; outP; outCI; outC; }
+}

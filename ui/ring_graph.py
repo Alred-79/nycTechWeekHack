@@ -157,7 +157,7 @@ _TEMPLATE = r"""
 
   <div id="controls" class="panel">
     <button class="btn-ring" id="bRing" onclick="revealRing()">The ring</button>
-    <button class="btn-all on" id="bAll" onclick="showAll()">Show all 294</button>
+    <button class="btn-all on" id="bAll" onclick="showAll()">Show all __N_ACCOUNTS__</button>
     <button class="btn-flow on" id="bFlow" onclick="toggleFlow()">Flow ▶</button>
     <button class="btn-spin on" id="bSpin" onclick="toggleSpin()">Auto-spin ⟳</button>
     <button class="btn-fit" onclick="fit()">Fit ⤢</button>
@@ -189,7 +189,7 @@ _TEMPLATE = r"""
     the lines are the transfers between them.<br><br>
     <b>Click any account</b> to light up the chain the money flows <i>through</i> it —
     everything else dims so you can read one path at a time.<br><br>
-    <b>Show all 294</b> drops the whole bank back in (the ring hides in the noise).
+    <b>Show all __N_ACCOUNTS__</b> drops the whole bank back in (the ring hides in the noise).
     <b>Flow</b> animates the transfers · <b>drag</b> to rotate · <b>scroll</b> to zoom.<br><br>
     Red = escalated mule · amber = sent to a human · gray = the planted decoy.
   </div>
@@ -220,7 +220,7 @@ function centerPull(strength, onlyCandidates){
   return force;
 }
 
-// Force tuning differs by view: the full 294-node graph wants to spread into a
+// Force tuning differs by view: the full account graph wants to spread into a
 // noise cloud; the ring view wants the disconnected chains pulled tightly together.
 function applyForces(){
   if(!Graph) return;
@@ -504,11 +504,13 @@ else document.addEventListener("DOMContentLoaded", start);
 
 def build_html(graph: dict, height: int = 600) -> str:
     """The complete, self-contained HTML (vendored JS inlined) for `graph`."""
+    n_accounts = sum(1 for n in graph.get("nodes", []) if n.get("kind") == "account")
     return (_TEMPLATE
             .replace("__LIBS__", _libs())
             .replace("__DATA__", json.dumps(graph))
             .replace("__COLORS__", json.dumps(COLORS))
-            .replace("__HEIGHT__", str(height)))
+            .replace("__HEIGHT__", str(height))
+            .replace("__N_ACCOUNTS__", str(n_accounts)))
 
 
 def render(graph: dict, height: int = 600) -> None:

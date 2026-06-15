@@ -1,0 +1,62 @@
+// Authoritative plate-notation graph of Agent 2 (Estimator), mirroring the
+// model defined in agents/ranker.py. Rendered with the graphviz `dot` binary:
+//   dot -Tpng -Gdpi=220 docs/diagrams/pymc-model-graph.gv -o docs/diagrams/pymc-model-graph.png
+//
+// Structure matches ranker.estimate(): Beta priors on the per-feature fire-rates
+// (phi_mule, phi_legit) and the mixing weight pi, a masked product-of-Bernoullis
+// likelihood folded into a single mixture Potential via logsumexp, and the
+// deterministic posterior membership theta. The `feature` plate repeats over the
+// 7 signals; the `account` plate repeats over the N accounts.
+digraph model {
+  bgcolor="#0a0c11";
+  rankdir=TB;
+  fontname="Helvetica"; fontcolor="#e8eefc"; fontsize=20; labelloc="t";
+  label="\nQuorum · Agent 2 — Estimator\nmasked two-component Bayesian mixture (PyMC / NUTS)\n";
+
+  node [fontname="Helvetica", fontcolor="#e8eefc", penwidth=1.6, style="filled"];
+  edge [color="#8ab4ff", penwidth=1.4, arrowsize=0.8];
+
+  // --- free random variables (priors) ---
+  pi       [label="pi\n~ Beta(1, 9)", shape=ellipse, color="#8ab4ff", fillcolor="#16294f"];
+
+  // --- feature plate: per-signal class-conditional fire-rates ---
+  subgraph cluster_feature {
+    label="feature  (7 signals)";
+    labelloc="b"; labeljust="r";
+    fontcolor="#b9c6e6"; color="#39507f"; style="rounded";
+    phi_mule  [label="phi_mule\n~ Beta(4, 1)", shape=ellipse, color="#8ab4ff", fillcolor="#16294f"];
+    phi_legit [label="phi_legit\n~ Beta(1, 4)", shape=ellipse, color="#8ab4ff", fillcolor="#16294f"];
+  }
+
+  // --- account plate: per-account masked likelihood + posterior membership ---
+  subgraph cluster_account {
+    label="account  (N)";
+    labelloc="b"; labeljust="r";
+    fontcolor="#b9c6e6"; color="#39507f"; style="rounded";
+
+    X  [label="X\nobserved signals", shape=box, color="#5fd0e0", fillcolor="#0e3a44"];
+    M  [label="M\napplicability mask", shape=box, color="#5fd0e0", fillcolor="#0e3a44"];
+
+    ll  [label="ll_mule, ll_legit\nmasked  Σ M·[X·log φ + (1−X)·log(1−φ)]",
+         shape=box, color="#b794ff", fillcolor="#2e1b54"];
+
+    obs [label="obs  (Potential)\nΣ logsumexp[ log π+ll_mule , log(1−π)+ll_legit ]",
+         shape=octagon, color="#f7b733", fillcolor="#4a3410"];
+
+    theta [label="theta = P(mule | signals)\nDeterministic — full posterior",
+           shape=box, color="#ff7ad9", fillcolor="#4a1640"];
+  }
+
+  // --- edges (generative dependencies) ---
+  phi_mule  -> ll;
+  phi_legit -> ll;
+  X         -> ll;
+  M         -> ll;
+
+  ll  -> obs;
+  pi  -> obs   [label="mix", fontcolor="#ffd98a", fontsize=11];
+
+  pi        -> theta [style=dashed];
+  phi_mule  -> theta [style=dashed];
+  ll        -> theta [style=dashed];
+}

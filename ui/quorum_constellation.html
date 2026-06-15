@@ -118,7 +118,7 @@
 
   <div id="controls" class="panel">
     <button class="btn-ring" id="bRing" onclick="revealRing()">The ring</button>
-    <button class="btn-all on" id="bAll" onclick="showAll()">Show all 294</button>
+    <button class="btn-all on" id="bAll" onclick="showAll()">Show all 298</button>
     <button class="btn-flow on" id="bFlow" onclick="toggleFlow()">Flow ▶</button>
     <button class="btn-spin on" id="bSpin" onclick="toggleSpin()">Auto-spin ⟳</button>
     <button class="btn-fit" onclick="fit()">Fit ⤢</button>
@@ -150,7 +150,7 @@
     the lines are the transfers between them.<br><br>
     <b>Click any account</b> to light up the chain the money flows <i>through</i> it —
     everything else dims so you can read one path at a time.<br><br>
-    <b>Show all 294</b> drops the whole bank back in (the ring hides in the noise).
+    <b>Show all 298</b> drops the whole bank back in (the ring hides in the noise).
     <b>Flow</b> animates the transfers · <b>drag</b> to rotate · <b>scroll</b> to zoom.<br><br>
     Red = escalated mule · amber = sent to a human · gray = the planted decoy.
   </div>
@@ -206,7 +206,7 @@ function centerPull(strength, onlyCandidates){
   return force;
 }
 
-// Force tuning differs by view: the full 294-node graph wants to spread into a
+// Force tuning differs by view: the full account graph wants to spread into a
 // noise cloud; the ring view wants the disconnected chains pulled tightly together.
 function applyForces(){
   if(!Graph) return;

@@ -38,7 +38,7 @@ Every year an estimated **\$800B–\$2T** is washed through the banking system �
 <p align="center">
   <img src="docs/diagrams/constellation2.png" alt="5,000 transactions — the ring hidden in the noise" width="100%">
 </p>
-<p align="center"><sub><b>The haystack.</b> 5,000 transactions · 294 accounts. The dim cloud is normal banking; the red chains are the laundering ring — money-flow edges lit. Fully interactive: open <code>ui/quorum_constellation.html</code> in any browser (no server, no internet).</sub></p>
+<p align="center"><sub><b>The haystack.</b> 5,000 transactions · 298 accounts. The dim cloud is normal banking; the red chains are the laundering ring — money-flow edges lit. Fully interactive: open <code>ui/quorum_constellation.html</code> in any browser (no server, no internet).</sub></p>
 
 <!-- ░░░ THE NEEDLE ░░░ -->
 <p align="center">
@@ -54,7 +54,7 @@ Five specialist agents in a **Find → Rank → Act → Ground → Explain** rel
 
 ```mermaid
 flowchart TB
-    CSV[("Crestline CSV<br/>5k txns · ~300 accounts")] --> DB["DuckDB<br/>in-process SQL"]
+    CSV[("Crestline CSV<br/>5k txns · 298 accounts")] --> DB["DuckDB<br/>in-process SQL"]
     DB --> COG
 
     subgraph COG["🧠 COGNEE — shared memory · fields accrete agent-by-agent"]
@@ -99,7 +99,7 @@ flowchart TB
 <p align="center">
   <img src="docs/diagrams/dashboard.png" alt="The product — KPIs and a fully-reasoned case dossier" width="100%">
 </p>
-<p align="center"><sub>~300 accounts → a queue of 14 in under a second. Every verdict carries its posterior, its expected-loss ledger (<b>argmin decides</b>), its signed signal contributions, and a decision log. No bare score anywhere.</sub></p>
+<p align="center"><sub>298 accounts → a queue of 14 in under a second. Every verdict carries its posterior, its expected-loss ledger (<b>argmin decides</b>), its signed signal contributions, and a decision log. No bare score anywhere.</sub></p>
 
 ---
 
@@ -110,8 +110,14 @@ flowchart TB
 The data has **no labels**, so the Estimator doesn't classify — it *infers*. It posits two latent classes (**legit** vs **mule**), each with its own vector of signal fire-rates `φ`, and lets **PyMC's NUTS sampler (`nutpie`, 4 chains)** learn the rates, the mixing weight, and every account's posterior probability of being a mule — with an honest credible interval.
 
 <p align="center">
-  <img src="docs/diagrams/pymc-estimator.png" alt="The masked two-component Bayesian mixture" width="74%">
+  <img src="docs/diagrams/pymc-estimator.png" alt="The masked two-component Bayesian mixture — data flow" width="100%">
 </p>
+<p align="center"><sub><b>The data flow.</b> Inputs from Cognee + Beta priors → a masked likelihood → the <code>logsumexp</code> mixture → NUTS → a full posterior → the three fields written back onto the <code>Case</code> node. The three callouts are the real Bayesian engineering, below.</sub></p>
+
+<p align="center">
+  <img src="docs/diagrams/pymc-model-graph.png" alt="The PyMC plate-notation model graph" width="78%">
+</p>
+<p align="center"><sub><b>The model itself.</b> The <code>pm.model_to_graphviz</code> plate graph generated from the actual model in <code>agents/ranker.py</code> — the <code>feature</code> plate over the 7 signals, the <code>account</code> plate over N accounts, and the mixture folded into one <code>Potential</code>. Reproducible: <code>dot -Tpng docs/diagrams/pymc-model-graph.gv -o docs/diagrams/pymc-model-graph.png</code>.</sub></p>
 
 Three pieces of real Bayesian engineering — each is why a demo moment lands:
 

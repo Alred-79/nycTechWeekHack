@@ -1278,14 +1278,25 @@ st.markdown(
 
 if st.session_state.result is not None:
     kpi_row(st.session_state.result)
+    _n_decoy = st.session_state.result["counts"]["clear"]
+    st.caption(
+        f"**Decoys** are the trap: {_n_decoy} accounts planted to look guilty — each "
+        "shares a device with several others (the obvious red flag a rules engine "
+        "chases) but is isolated in the money graph. Flagging them is the easy mistake; "
+        "Quorum holds their probability near zero and **clears them instead of escalating**.")
 
-tabs = st.tabs(["📋 Queue", "🌐 Constellation", "🔎 Case detail",
-                "🧬 Signatures", "📄 Memo", "🎯 Market", "🧠 Pipeline"])
+# Pipeline sits at position 2 — the agent-collaboration proof (criterion 2) is the
+# headline, so it's surfaced right after the Queue rather than buried last. Tabs are
+# bound by name below, so this display order and the content blocks stay decoupled.
+(tab_queue, tab_pipeline, tab_constellation, tab_case, tab_signatures,
+ tab_memo, tab_market) = st.tabs(
+    ["📋 Queue", "🧠 Pipeline", "🌐 Constellation", "🔎 Case detail",
+     "🧬 Signatures", "📄 Memo", "🎯 Market"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 1 — Queue
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[0]:
+with tab_queue:
     if st.session_state.result is None:
         st.markdown("#### Load the Crestline transaction file")
 
@@ -1368,21 +1379,35 @@ with tabs[0]:
         sel_rows = selection.get("rows", []) if selection else []
         if sel_rows:
             st.session_state.selected = df.iloc[sel_rows[0]]["Account"]
-            st.info(f"Selected **{st.session_state.selected}** → open the "
-                    f"**🔎 Case detail** tab for the full breakdown.")
         st.caption(f"The {n_total - len(cases)} accounts with no firing signal were "
                    f"auto-cleared by the Detector and never surfaced. "
-                   f"Click a row to inspect it.")
+                   f"Click a row to open its full case dossier below.")
+
+        # Inline dossier: clicking a row opens the full breakdown right here, so the
+        # analyst never has to hunt for another tab. (The 🔎 Case detail tab is the
+        # same view with an account picker + ring subgraph + memo download.)
+        if sel_rows:
+            sel_acct = st.session_state.selected
+            sel_case = next((c for c in r["cases"] if c["account"] == sel_acct), None)
+            if sel_case is not None:
+                st.markdown(f"<div class='qsec'>Case dossier · "
+                            f"<span class='num'>{sel_acct}</span> — "
+                            f"full breakdown · more on the 🔎 Case detail tab</div>",
+                            unsafe_allow_html=True)
+                st.markdown(dossier_html(sel_case, adj["tau"]), unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 1b — Constellation (the interactive 3D drag-and-drop ring graph)
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[1]:
+with tab_constellation:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
         r = st.session_state.result
         cn = r["counts"]
+        # Account count straight from the graph the constellation renders, so the
+        # "Show all N" copy never drifts from what's actually on screen.
+        n_accounts = sum(1 for n in r["graph"]["nodes"] if n.get("kind") == "account")
         st.markdown("<div class='qsec'>The money-laundering constellation · "
                     "<span class='num'>opens full-screen in its own tab</span></div>",
                     unsafe_allow_html=True)
@@ -1424,7 +1449,7 @@ with tabs[1]:
             "<span class='launch-k'><span class='dot'></span>Interactive · WebGL · self-contained</span>"
             "<span class='launch-t'>Launch the Constellation</span>"
             "<span class='launch-d'><b>Click an account to follow its money</b> through the ring · "
-            "<b>Show all 294</b> drops the whole bank back in · drag to orbit · it auto-spins when idle.</span>"
+            f"<b>Show all {n_accounts}</b> drops the whole bank back in · drag to orbit · it auto-spins when idle.</span>"
             "</span>"
             "<span class='launch-cta'>Open full-screen <span class='arr'>↗</span></span>"
             "</a>",
@@ -1432,15 +1457,16 @@ with tabs[1]:
         st.caption("Opens in a new browser tab · fully offline · or double-click "
                    "`ui/quorum_constellation.html`.")
 
-        st.markdown("<div class='qsec'>Triage funnel · "
-                    "<span class='num'>294 accounts → the 9-account ring</span></div>",
+        st.markdown(f"<div class='qsec'>Triage funnel · "
+                    f"<span class='num'>{n_accounts} accounts → the {cn['escalate']}-account "
+                    f"ring</span></div>",
                     unsafe_allow_html=True)
         st.plotly_chart(charts.funnel(cn), use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 2 — Case detail
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[2]:
+with tab_case:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
@@ -1493,7 +1519,7 @@ with tabs[2]:
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 3 — Signatures (the mechanical fingerprints, learned from the data)
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[3]:
+with tab_signatures:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
@@ -1513,7 +1539,7 @@ with tabs[3]:
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 4 — Memo (money-flow Sankey + SAR memo + learned closing rule)
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[4]:
+with tab_memo:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
@@ -1565,7 +1591,7 @@ with tabs[4]:
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 5 — Market (Geo intelligence, digital twin, buyers, outreach)
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[5]:
+with tab_market:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
@@ -1574,6 +1600,15 @@ with tabs[5]:
         gm = _geo_market(r)
         packet = _gtm(r)
         conn = _geo_connection(r)
+
+        # ── What this tab is ───────────────────────────────────────────────
+        st.markdown("#### Why this matters &nbsp;·&nbsp; the business case behind the ring")
+        st.caption(
+            "This isn't part of triage — it's the **Domain Expert agent's grounding**. "
+            "It queries the geodo.ai MCP and the FinCEN/OCC enforcement registry to answer "
+            "*\"so what?\"*: which institutions buy this, the real peer penalised for **this "
+            "exact failure** (the \"why now\"), the dollars Quorum just saved, and a sample "
+            "go-to-market packet. Read-only — no outreach is ever sent.")
 
         # ── Geo connection ─────────────────────────────────────────────────
         st.markdown(_conn_badge_html(conn), unsafe_allow_html=True)
@@ -1673,7 +1708,7 @@ with tabs[5]:
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 6 — Pipeline view (criterion 2: fields accreting across 5 agents)
 # ══════════════════════════════════════════════════════════════════════════════
-with tabs[6]:
+with tab_pipeline:
     if st.session_state.result is None:
         st.info("Load the file on the Queue screen first.")
     else:
