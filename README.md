@@ -143,6 +143,8 @@ Every signal is **learned from the data**, not hardcoded — and the Detector's 
   <img src="docs/diagrams/fingerprints.png" alt="Three learned fingerprints — automation, burst cohort, structuring" width="100%">
 </p>
 
+**And none of this is a static write-up — it's a tab.** The product's **⚖️ Reasoning** screen walks the whole argument live for any account: a click-to-inspect generative-model diagram, a per-account **weight-of-evidence waterfall** (prior logit → each signal's learned log Bayes factor → posterior), the reconstructed posterior checked against the **real NUTS samples**, and an expected-loss **balance** that tips to the cheaper action as you drag the cost matrix and watch τ move with it. Real diagnostics travel with it (R̂ ≈ 1.004, 0 divergences), regenerated deterministically by `ui/stats_pack.py`.
+
 ### 🕸️ Cognee — the memory that makes the collaboration real
 
 Two layers: an **operational handoff store** where one `Case` node accretes fields agent-by-agent (and a downstream agent throws if the upstream fields are absent), and a **semantic knowledge graph** where every agent contributes a tagged layer and a single `cognify()` builds a Gemini-backed graph carrying full multi-agent provenance — queryable in plain English. It degrades gracefully to the fast local store with no key, so the pipeline is never blocked.

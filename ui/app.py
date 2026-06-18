@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import geodo_market
 import geodo_research
 import gtm
-from ui import charts, ring_graph, snapshot
+from ui import charts, ring_graph, snapshot, stats_pack
 from ui.feed_parse import parse_research_feed
 from ui.graph_data import build_graph, funnel_counts
 from ui.snapshot import compute_chart_data
@@ -410,6 +410,28 @@ def inject_theme() -> None:
         .tb-scan, .qr-fill, .qrow.esc .qr-dot{ animation:none!important; }
         .qr-fill{ transform:scaleX(1)!important; }
       }
+
+      /* ══ ⚖️ REASONING tab ══════════════════════════════════════════════════ */
+      .woe{ border:1px solid var(--line); border-radius:5px; overflow:hidden; margin:2px 0 4px; }
+      .wrow{ display:grid; grid-template-columns:1.5fr .8fr .8fr; gap:10px; padding:7px 14px;
+        border-bottom:1px solid var(--line); font-family:var(--mono); font-size:11px; align-items:center; }
+      .wrow:last-child{ border-bottom:none; }
+      .wrow.h{ background:rgba(0,0,0,.22); color:var(--label); font-size:8.5px; letter-spacing:.14em;
+        text-transform:uppercase; }
+      .wrow .wk{ color:var(--text); } .wrow .wf{ color:var(--muted); }
+      .wrow .wv{ text-align:right; font-weight:600; }
+      .wna{ color:var(--label); opacity:.55; }
+      /* numbered act headers (replace the flat eyebrows) */
+      .acthead{ display:flex; align-items:center; gap:15px; margin:26px 0 14px; }
+      .actnum{ width:42px; height:42px; border-radius:50%; border:1.5px solid var(--accent); color:var(--accent);
+        display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-size:18px;
+        font-weight:600; flex-shrink:0; box-shadow:0 0 0 4px rgba(95,208,224,.05);
+        background:radial-gradient(circle at 50% 32%, rgba(95,208,224,.13), transparent 70%); }
+      .actbody{ flex-shrink:0; min-width:0; }
+      .acttitle{ font-family:var(--serif); font-size:21px; font-weight:600; color:var(--text); line-height:1.12; }
+      .actsub{ font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+        color:var(--label); margin-top:3px; }
+      .actrule{ flex:1; height:1px; background:linear-gradient(90deg, var(--line2), transparent); }
 
       /* ══ LAUNCH CARD — opens the standalone constellation in a new tab ═════ */
       a.launch{ display:flex; align-items:center; gap:24px; text-decoration:none!important;
@@ -974,6 +996,267 @@ def triage_board_html(cases: list, tau: float, selected: str | None = None) -> s
         "</div>")
     return (f"<div class='tboard'><div class='tb-scan'></div>{head}"
             f"<div class='tb-rows'>{rows}</div></div>")
+
+
+# ── ⚖️ Reasoning tab builders ────────────────────────────────────────────────
+def reasoning_intro_html() -> str:
+    return (
+        "<div class='qsec'>The Reasoning · <span class='num'>from skeptical prior to "
+        "cost-optimal verdict</span></div>"
+        "<div class='qmast-sub' style='max-width:none;margin:0 0 8px'>Every triage call is a "
+        "<i>Bayesian argument</i>: a skeptical prior, evidence weighed as learned likelihood ratios, "
+        "an honest posterior with its uncertainty, then a verdict chosen to <i>minimise expected loss</i> "
+        "— never a threshold on a black-box score. We lead with the evidence, then unpack the prior it "
+        "builds on, the posterior, and the verdict — hover anything for the math.</div>")
+
+
+_MODEL_DIAGRAM_TPL = """<!doctype html><html><head><meta charset='utf-8'><style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&display=swap');
+  *{box-sizing:border-box} html,body{margin:0;background:#0a0c11;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  svg{width:100%;max-width:980px;height:auto;display:block;margin:0 auto}
+  .medge{stroke:#39507f;stroke-width:1.5;opacity:.7}
+  .melabel{fill:#ffd98a;font-size:10px;text-anchor:middle}
+  .mnode{cursor:pointer}
+  .mnode rect{stroke-width:1.6;transition:stroke-width .2s,filter .2s}
+  .mnode:hover rect{stroke-width:2.4;filter:drop-shadow(0 0 8px currentColor)}
+  .mnode.pinned rect{stroke-width:3;filter:drop-shadow(0 0 13px currentColor)}
+  .mtitle{font-family:'Fraunces',Georgia,serif;font-size:13px;font-weight:600;text-anchor:middle;pointer-events:none}
+  .mform{fill:#aeb9d4;font-size:9.5px;text-anchor:middle;pointer-events:none}
+  .plate{fill:none;stroke:#39507f;stroke-dasharray:4 4;opacity:.55}
+  .platelab{fill:#b9c6e6;font-size:9.5px}
+  .sweep{fill:url(#g);animation:mdsweep 6.5s linear infinite;pointer-events:none}
+  @keyframes mdsweep{0%{transform:translateX(-130px)}100%{transform:translateX(1010px)}}
+  .insp{max-width:980px;margin:10px auto 0;border:1px solid #1b2233;border-left:3px solid var(--ic,#39507f);
+    border-radius:6px;background:#0f131b;padding:11px 15px;transition:border-color .25s}
+  .ititle{font-family:'Fraunces',Georgia,serif;font-size:15px;font-weight:600;color:#e8eefc;transition:color .2s}
+  .ihint{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#5a6273;float:right;margin-top:5px}
+  .iform{font-size:11px;color:#aeb9d4;margin:3px 0 6px;min-height:13px}
+  .idetail{font-size:11px;color:#8d97b4;line-height:1.6}
+  @media (prefers-reduced-motion:reduce){.sweep{animation:none;opacity:0}}
+</style></head><body>
+<svg viewBox='0 0 980 372'>
+  <defs>
+    <marker id='arr' markerWidth='9' markerHeight='9' refX='7.5' refY='4.5' orient='auto'>
+      <path d='M0,0 L9,4.5 L0,9 z' fill='#39507f'/></marker>
+    <linearGradient id='g' x1='0' x2='1'>
+      <stop offset='0' stop-color='#5fd0e0' stop-opacity='0'/>
+      <stop offset='.5' stop-color='#5fd0e0' stop-opacity='.45'/>
+      <stop offset='1' stop-color='#5fd0e0' stop-opacity='0'/></linearGradient>
+  </defs>
+  <rect class='sweep' x='0' y='18' width='95' height='340'/>
+  <rect class='plate' x='30' y='222' width='170' height='148' rx='10'/>
+  <text class='platelab' x='38' y='362'>feature plate · 7 signals</text>
+  <rect class='plate' x='240' y='92' width='728' height='252' rx='10'/>
+  <text class='platelab' x='248' y='334'>account plate · N</text>
+  __EDGES__
+  __NODES__
+</svg>
+<div id='insp' class='insp'>
+  <div class='ititle'>The generative model<span class='ihint'>hover · click to pin</span></div>
+  <div class='iform'></div>
+  <div class='idetail'>Each box is a piece of the model; the arrows are dependencies. Hover any node to preview its role — click to pin the details here.</div>
+</div>
+<script>
+  var insp=document.getElementById('insp');
+  var ti=insp.querySelector('.ititle'), fo=insp.querySelector('.iform'), de=insp.querySelector('.idetail');
+  var HINT="<span class='ihint'>hover \\u00b7 click to pin</span>";
+  var pinned=null;
+  function fill(n){ insp.style.setProperty('--ic', n.dataset.color);
+    ti.innerHTML=n.dataset.title+HINT; ti.style.color=n.dataset.color;
+    fo.textContent=n.dataset.formula; de.textContent=n.dataset.detail; }
+  function reset(){ insp.style.removeProperty('--ic'); ti.style.color='';
+    ti.innerHTML="The generative model"+HINT; fo.textContent='';
+    de.textContent='Each box is a piece of the model; the arrows are dependencies. Hover any node to preview its role — click to pin the details here.'; }
+  document.querySelectorAll('.mnode').forEach(function(n){
+    n.addEventListener('mouseenter', function(){ if(!pinned) fill(n); });
+    n.addEventListener('mouseleave', function(){ if(!pinned) reset(); });
+    n.addEventListener('click', function(e){ e.stopPropagation();
+      if(pinned===n){ pinned.classList.remove('pinned'); pinned=null; reset(); }
+      else { if(pinned) pinned.classList.remove('pinned'); pinned=n; n.classList.add('pinned'); fill(n); } });
+  });
+  document.body.addEventListener('click', function(){ if(pinned){ pinned.classList.remove('pinned'); pinned=null; reset(); } });
+</script>
+</body></html>"""
+
+
+def model_diagram_html() -> str:
+    """Interactive generative-model diagram (inline-SVG island). Formulas always visible;
+    hover a node for its role. Mirrors agents/ranker.estimate() & docs/diagrams/pymc-model-graph.gv."""
+    nodes = [
+        (40, 150, 150, 56, "#8ab4ff", "#16294f", "π — base rate", "~ Beta(1, 9) · E=0.1",
+         "Mules are rare a priori — the one belief every account shares before we look at its behaviour. Beta(1,9) puts roughly 90% of prior mass below 0.25."),
+        (40, 246, 150, 48, "#8ab4ff", "#16294f", "φ_mule", "~ Beta(4, 1) · E=0.8",
+         "How often each signal fires when the account IS a mule. Learned by NUTS from the data, not asserted — change the signals and these move."),
+        (40, 306, 150, 48, "#8ab4ff", "#16294f", "φ_legit", "~ Beta(1, 4) · E=0.2",
+         "Fire-rate when legit. device_shared gets the same weak Beta(1,1) in both classes, so identity co-occurrence is non-discriminating and cannot drive a flag."),
+        (250, 152, 140, 50, "#5fd0e0", "#0e3a44", "X — signals", "observed {0,1}⁷",
+         "The seven behavioural flags the Detector wrote for this account: under-threshold, fresh cohort, zero merchant, pure sink, automation, relay depth, device shared."),
+        (250, 250, 140, 50, "#5fd0e0", "#0e3a44", "M — mask", "applicability",
+         "Some signals cannot structurally fire — a pure sink never originates, so automation and relay-depth are masked out. Those zeros are missing, not exculpatory."),
+        (448, 200, 168, 64, "#b794ff", "#2e1b54", "ℓℓ — masked", "Σ M·[X logφ + (1−X)log(1−φ)]",
+         "Per-class log-likelihood, summing only the applicable signals — where masking and the learned fire-rates combine into evidence."),
+        (674, 106, 184, 70, "#f7b733", "#4a3410", "obs — Potential", "Σ logsumexp[logπ+ℓℓₘ, log(1−π)+ℓℓₗ]",
+         "The latent legit/mule class is summed out analytically with logsumexp, leaving a smooth continuous target NUTS can sample without divergences."),
+        (674, 250, 184, 64, "#ff7ad9", "#4a1640", "θ = P(mule | x)", "Deterministic · full posterior",
+         "The posterior probability this account is a mule — a full distribution, summarised as a mean and an honest 94% credible interval, not a single point score."),
+        (884, 250, 80, 64, "#34d6a4", "#0e3a2a", "outputs", "p · CI · WoE",
+         "p_mule, the 94% interval, and per-signal log Bayes factors — written to Cognee for the Adjudicator and Reporter to consume."),
+    ]
+    edges = [
+        (190, 178, 674, 150, False, "mix"), (190, 270, 448, 224, False, ""),
+        (190, 330, 448, 248, False, ""), (390, 177, 448, 216, False, ""),
+        (390, 275, 448, 240, False, ""), (616, 224, 674, 150, False, ""),
+        (766, 176, 766, 250, False, ""), (448, 242, 674, 280, True, ""),
+        (858, 282, 884, 282, False, ""),
+    ]
+    edge_svg = ""
+    for x1, y1, x2, y2, dashed, label in edges:
+        dash = " stroke-dasharray='5 4'" if dashed else ""
+        edge_svg += (f"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' class='medge'{dash} "
+                     f"marker-end='url(#arr)'/>")
+        if label:
+            edge_svg += (f"<text x='{(x1 + x2) // 2}' y='{(y1 + y2) // 2 - 5}' "
+                         f"class='melabel'>{label}</text>")
+    node_svg = ""
+    for x, y, w, h, stroke, fill, title, formula, detail in sorted(nodes, key=lambda n: n[1]):
+        node_svg += (
+            f'<g class="mnode" data-title="{title}" data-formula="{formula}" '
+            f'data-detail="{detail}" data-color="{stroke}">'
+            f"<rect x='{x}' y='{y}' width='{w}' height='{h}' rx='9' fill='{fill}' "
+            f"stroke='{stroke}' style='color:{stroke}'/>"
+            f"<text x='{x + w // 2}' y='{y + 23}' class='mtitle' fill='{stroke}'>{title}</text>"
+            f"<text x='{x + w // 2}' y='{y + 41}' class='mform'>{formula}</text></g>")
+    return _MODEL_DIAGRAM_TPL.replace("__EDGES__", edge_svg).replace("__NODES__", node_svg)
+
+
+def convergence_panel_html(pack: dict | None) -> str:
+    if pack and pack.get("convergence"):
+        cv = pack["convergence"]
+        acc = cv.get("accept_rate")
+        tiles = (_smetric("max R̂", f"{cv.get('max_rhat', 0):.3f}", "→1 = chains agree")
+                 + _smetric("min ESS", f"{cv.get('min_ess', 0):,.0f}", "effective samples")
+                 + _smetric("divergences", f"{cv.get('divergences', 0)}", "HMC pathologies"))
+        if acc is not None:
+            tiles += _smetric("accept rate", f"{acc:.2f}", "NUTS target 0.95")
+        src = (f"live · {pack.get('chains', 4)} chains × {pack.get('draws', 1000)} draws "
+               f"· seed {pack.get('seed', 0)} (nutpie)")
+    else:
+        tiles = (_smetric("max R̂", "1.004", "→1 = chains agree")
+                 + _smetric("divergences", "0", "HMC pathologies")
+                 + _smetric("sampler", "NUTS", "nutpie · 4 chains"))
+        src = "verified test run — run <code>uv run python -m ui.stats_pack</code> for live diagnostics"
+    return (f"<div class='smetrics' style='--a:var(--accent)'>{tiles}</div>"
+            f"<div class='sline' style='margin-top:6px'>Convergence · <b>{src}</b></div>")
+
+
+def woe_table_html(case: dict, phi: dict | None) -> str:
+    sig = case.get("signals") or {}
+    has_age = sig.get("_age_days") is not None
+    orig = (sig.get("_out_deg", 0) or 0) > 0
+    appl = {"under_threshold": True, "fresh_cohort": has_age, "zero_merchant": True,
+            "pure_sink": True, "automation": orig, "relay_depth": orig, "device_shared": True}
+    if phi:
+        mule = dict(zip(phi["feature"], phi["mule_mean"]))
+        legit = dict(zip(phi["feature"], phi["legit_mean"]))
+    else:
+        mule = {f: (0.5 if f == "device_shared" else 0.8) for f in appl}
+        legit = {f: (0.5 if f == "device_shared" else 0.2) for f in appl}
+    rows = ("<div class='wrow h'><span>signal</span><span>state</span>"
+            "<span style='text-align:right'>weight of evidence</span></div>")
+    for f in ["under_threshold", "fresh_cohort", "zero_merchant", "pure_sink",
+              "automation", "relay_depth", "device_shared"]:
+        name = f.replace("_", " ")
+        if not appl[f]:
+            rows += (f"<div class='wrow'><span class='wk'>{name}</span>"
+                     f"<span class='wf wna'>masked</span><span class='wv wna'>n/a</span></div>")
+            continue
+        fired = bool(sig.get(f, 0))
+        pm = min(max(float(mule[f]), 1e-4), 1 - 1e-4)
+        pl = min(max(float(legit[f]), 1e-4), 1 - 1e-4)
+        import math as _m
+        w = (_m.log(pm) - _m.log(pl)) if fired else (_m.log(1 - pm) - _m.log(1 - pl))
+        col = "var(--esc)" if w >= 0 else "var(--clr)"
+        rows += (f"<div class='wrow'><span class='wk'>{name}</span>"
+                 f"<span class='wf'>{'✓ fired' if fired else '· absent'}</span>"
+                 f"<span class='wv' style='color:{col}'>{w:+.2f}</span></div>")
+    return f"<div class='woe'>{rows}</div>"
+
+
+def act_header(num: str, title: str, sub: str) -> str:
+    """A numbered section header for the Reasoning acts (badge + serif title + rule)."""
+    return (f"<div class='acthead'><div class='actnum'>{num}</div>"
+            f"<div class='actbody'><div class='acttitle'>{title}</div>"
+            f"<div class='actsub'>{sub}</div></div><div class='actrule'></div></div>")
+
+
+_LOSS_BALANCE_TPL = """<!doctype html><html><head><meta charset='utf-8'><style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&display=swap');
+  *{box-sizing:border-box} html,body{margin:0;background:#0a0c11;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  svg{width:100%;max-width:560px;height:auto;display:block;margin:0 auto}
+  .tlab{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;text-anchor:middle}
+  .cv{font-size:15px;font-weight:600;text-anchor:middle}
+  .verdict{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:600;text-anchor:middle}
+  .cap{max-width:560px;margin:6px auto 0;font-size:9.5px;color:#7b859b;text-align:center;letter-spacing:.04em}
+</style></head><body>
+<svg viewBox='0 0 620 340'>
+  <rect x='248' y='296' width='124' height='12' rx='4' fill='#1b2233' stroke='#39507f'/>
+  <rect x='305' y='84' width='10' height='214' fill='#1b2233'/>
+  <g class='beam'>
+    <animateTransform attributeName='transform' attributeType='XML' type='rotate'
+      from='0 310 80' to='__THETA__ 310 80' dur='1.1s' begin='0.15s' fill='freeze'
+      calcMode='spline' keyTimes='0;1' keySplines='0.2 0.7 0.2 1'/>
+    <rect x='118' y='76' width='384' height='8' rx='4' fill='#aeb9d4'/>
+    <line x1='150' y1='80' x2='150' y2='150' stroke='#6b7796' stroke-width='2'/>
+    <line x1='470' y1='80' x2='470' y2='150' stroke='#6b7796' stroke-width='2'/>
+    <g style='__ESCDIM__'>
+      <rect x='90' y='150' width='120' height='48' rx='9' fill='#0f131b' stroke='#ff5468' stroke-width='1.5'/>
+      <text class='tlab' x='150' y='169' fill='#ff5468'>ESCALATE</text>
+      <text class='cv' x='150' y='189' fill='#ff5468' data-to='__EESC__'>$0</text>
+    </g>
+    <g style='__CLRDIM__'>
+      <rect x='410' y='150' width='120' height='48' rx='9' fill='#0f131b' stroke='#34d6a4' stroke-width='1.5'/>
+      <text class='tlab' x='470' y='169' fill='#34d6a4'>CLEAR</text>
+      <text class='cv' x='470' y='189' fill='#34d6a4' data-to='__ECLR__'>$0</text>
+    </g>
+  </g>
+  <polygon points='296,84 324,84 310,62' fill='#5fd0e0'/>
+  <text class='verdict' x='310' y='324' fill='__VCOL__'>__ACTION__</text>
+</svg>
+<div class='cap'>The beam tips toward the lower expected-loss action — <b style='color:__VCOL__'>__SUB__</b>.</div>
+<script>
+  var R=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fmt(n){return '$'+Math.round(n).toLocaleString('en-US');}
+  document.querySelectorAll('.cv').forEach(function(el){
+    var to=parseFloat(el.dataset.to)||0,d=1100,t0=null;
+    if(R){el.textContent=fmt(to);return;}
+    function s(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);
+      el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(s);}
+    requestAnimationFrame(s);});
+</script>
+</body></html>"""
+
+
+def loss_balance_html(case: dict, c_fp: float, c_fn: float) -> str:
+    """Animated 'balance of loss' scale — the beam tips toward the cheaper (chosen)
+    action. On-theme with ⚖️; a new dynamic element for the Verdict act."""
+    import math as _m
+    p = float(case.get("p_mule") or 0.0)
+    e_esc = c_fp * (1 - p)
+    e_clr = c_fn * p
+    action = case.get("action", "")
+    mag = min(1.0, abs(_m.log(max(e_clr, 1e-6)) - _m.log(max(e_esc, 1e-6))) / 5.0)
+    deg = round(13.0 * mag, 1)
+    theta = -deg if action == "ESCALATE" else (deg if action == "CLEAR" else 0.0)
+    vcol = {"ESCALATE": "#ff5468", "CLEAR": "#34d6a4", "REVIEW": "#f7b733"}.get(action, "#f7b733")
+    sub = {"ESCALATE": "escalate is cheaper than clearing",
+           "CLEAR": "clearing is cheaper than escalating",
+           "REVIEW": "too close to call — route to a human"}.get(action, "")
+    return (_LOSS_BALANCE_TPL
+            .replace("__THETA__", f"{theta:g}")
+            .replace("__EESC__", f"{e_esc:.2f}").replace("__ECLR__", f"{e_clr:.2f}")
+            .replace("__ESCDIM__", "" if action == "ESCALATE" else "opacity:.45")
+            .replace("__CLRDIM__", "" if action == "CLEAR" else "opacity:.45")
+            .replace("__VCOL__", vcol).replace("__ACTION__", action or "—").replace("__SUB__", sub))
 
 
 # ── Bespoke "Agent Relay" — the Case node accreting through Cognee (criterion 2) ─
@@ -1720,9 +2003,9 @@ if st.session_state.result is not None:
 # decoupled from the content order in code. Lead with the interactive visuals
 # (Constellation, then Case detail) before the Pipeline collaboration proof.
 (tab_queue, tab_constellation, tab_case, tab_pipeline, tab_signatures,
- tab_memo, tab_market) = st.tabs(
+ tab_memo, tab_reasoning, tab_market) = st.tabs(
     ["📋 Queue", "🌐 Constellation", "🔎 Case detail", "🧠 Pipeline",
-     "🧬 Signatures", "📄 Memo", "🎯 Market"])
+     "🧬 Signatures", "📄 Memo", "⚖️ Reasoning", "🎯 Market"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 1 — Queue
@@ -2013,6 +2296,142 @@ with tab_memo:
 
         st.caption("→ Full market intelligence, buyer personas, digital twin learning, "
                    "and go-to-market outreach are on the **🎯 Market** tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Screen 4b — Reasoning (the Bayesian + decision-theory argument, interactive)
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_reasoning:
+    if st.session_state.result is None:
+        st.info("Load the file on the Queue screen first.")
+    else:
+        r = st.session_state.result
+        cases = r["cases"]
+        by = {c["account"]: c for c in cases}
+        tau_op = r["adjudicator"]["tau"]
+        pack = stats_pack.load()
+        phi = pack.get("phi") if pack else None
+
+        st.markdown(reasoning_intro_html(), unsafe_allow_html=True)
+        components.html(model_diagram_html(), height=560, scrolling=False)
+
+        # ── control strip: archetype quick-pick + any account + the cost/τ sliders ──
+        ARCH = [("Ring · AC-0009", "AC-0009"), ("Boundary · AC-0012", "AC-0012"),
+                ("Decoy · AC-0045", "AC-0045")]
+        arch_map = {lbl: a for lbl, a in ARCH if a in by}
+        accts = sorted(by, key=lambda a: by[a].get("p_mule", 0), reverse=True)
+        cc = st.columns([2.2, 1, 1])
+        with cc[0]:
+            if hasattr(st, "segmented_control"):
+                picked = st.segmented_control("Trace an archetype", list(arch_map),
+                                              default=next(iter(arch_map), None))
+            else:
+                picked = st.radio("Trace an archetype", list(arch_map), horizontal=True)
+            # archetype pick drives the selectbox (only when it changes, so manual picks persist)
+            if picked and st.session_state.get("_reasoning_arch") != picked:
+                st.session_state["_reasoning_arch"] = picked
+                st.session_state["reasoning_acct"] = arch_map[picked]
+            if st.session_state.get("reasoning_acct") not in accts:
+                st.session_state["reasoning_acct"] = accts[0]
+            sel = st.selectbox("…or any surfaced account", accts, key="reasoning_acct")
+        with cc[1]:
+            c_fn = st.slider("C_FN · missed mule ($)", 1000, 10000, 4750, 250,
+                             help="Cost of clearing a true mule — BSA penalty-floor exposure (31 CFR §1020.320).")
+        with cc[2]:
+            c_fp = st.slider("C_FP · false flag ($)", 50, 1000, 250, 50,
+                             help="Cost of escalating a clean account — analyst review time.")
+        c_rev = 150.0
+        tau = c_fp / (c_fp + c_fn)
+        st.caption(f"**τ = C_FP/(C_FP+C_FN) = {tau:.3f}** — *derived*, not tuned · operative default "
+                   f"τ={tau_op:.3f}. Drag the costs to watch the decision boundary move.")
+        case = by[sel]
+
+        # verdict card — the answer up front (gauge vs τ + decision stamp + key metrics)
+        _lo, _hi = (list(case.get("credible_interval") or []) + [0.0, 0.0])[:2]
+        _act = case.get("action", "")
+        vc = st.columns([1.1, 1])
+        with vc[0]:
+            st.plotly_chart(charts.posterior_gauge(case, tau), use_container_width=True)
+        with vc[1]:
+            _stamp = (f"<div class='stamp {_DEC_CLS.get(_act, 'clr')}' style='transform:none;"
+                      f"margin:8px 0 12px;display:inline-block;font-size:16px;padding:6px 14px'>{_act}"
+                      f"<small>{_DEC_SUB.get(_act, '')}</small></div>")
+            _tiles = (_smetric("account", sel, (case.get('role') or '—').upper())
+                      + _smetric("posterior p", f"{case.get('p_mule', 0):.3f}",
+                                 f"94% CI [{_lo:.3f}, {_hi:.3f}]")
+                      + _smetric("EVPI", f"${case.get('EVPI', 0):,.0f}", "residual risk"))
+            st.markdown(f"{_stamp}<div class='smetrics' style='--a:var(--accent)'>{_tiles}</div>",
+                        unsafe_allow_html=True)
+
+        # Act I — evidence (the weight-of-evidence waterfall) — the lead chart
+        st.markdown(act_header("I", "evidence", "each signal is a learned likelihood ratio"),
+                    unsafe_allow_html=True)
+        st.plotly_chart(charts.logodds_waterfall(case, phi), use_container_width=True)
+        with st.expander("weight of evidence — every applicable signal, fired or absent"):
+            st.markdown(_chips_html(case), unsafe_allow_html=True)
+            st.markdown(woe_table_html(case, phi), unsafe_allow_html=True)
+            st.caption("A fired signal adds log(φ_mule/φ_legit); an *absent* applicable signal adds "
+                       "log((1−φ_mule)/(1−φ_legit)). device_shared learned to argue *legit* "
+                       "(φ_mule < φ_legit), so it can never drive a flag — and decoys clear because they "
+                       "lack the behavioural fingerprint (absence of evidence, properly weighed).")
+
+        # Act II — the prior / base rate (the waterfall's first bar, in detail)
+        st.markdown(act_header("II", "the skeptic's prior",
+                               "the base rate behind the waterfall's first bar"), unsafe_allow_html=True)
+        st.plotly_chart(charts.pi_prior_posterior(pack), use_container_width=True)
+        with st.expander("the prior, in full"):
+            base = ("Before any signal, Quorum assumes mules are **rare** — a `Beta(1, 9)` prior "
+                    "(mean 0.10). In log-odds that is the universal starting **bias** of "
+                    "`logit(0.10) ≈ −2.20` every account inherits (the waterfall's first bar), then "
+                    "evidence moves it.")
+            if pack and pack.get("pi"):
+                base += (f" The data updates the base rate to **π̄ = {pack['pi']['mean']:.2f}** "
+                         f"(94% HDI {pack['pi']['hdi']}).")
+            st.markdown(base)
+
+        # Act III — the posterior + trust
+        st.markdown(act_header("III", "the posterior", "belief, with honest doubt"),
+                    unsafe_allow_html=True)
+        st.plotly_chart(charts.posterior_density(cases, sel, tau), use_container_width=True)
+        with st.expander("convergence + the real sampler output"):
+            st.markdown(convergence_panel_html(pack), unsafe_allow_html=True)
+            ts = (pack.get("theta_samples") or {}).get(sel) if pack else None
+            if ts:
+                lo, hi = (list(case.get("credible_interval") or []) + [0.0, 0.0])[:2]
+                st.plotly_chart(
+                    charts.theta_hist(ts, case.get("p_mule", 0.0), lo, hi,
+                                      charts._color_for(case), tau),
+                    use_container_width=True)
+            else:
+                st.caption("Real per-account posterior samples are kept for the three archetypes "
+                           "(AC-0009 / AC-0012 / AC-0045) — pick one above to see the raw NUTS draws "
+                           "behind the Beta reconstruction.")
+
+        # Act IV — the verdict (cost-optimal decision)
+        st.markdown(act_header("IV", "the verdict", "cost decides, not a gut threshold"),
+                    unsafe_allow_html=True)
+        components.html(loss_balance_html(case, c_fp, c_fn), height=380, scrolling=False)
+        with st.expander("the expected-loss curves + arithmetic"):
+            st.plotly_chart(charts.loss_crossing(case, c_fp, c_fn, c_rev, tau), use_container_width=True)
+            st.markdown(_ledger_html(case), unsafe_allow_html=True)
+            reason = (case.get("action_reason") or "").replace("→", "<span class='em'>→</span>")
+            if reason:
+                st.markdown(f"<div class='dlog'>{reason}</div>", unsafe_allow_html=True)
+
+        # Act V — does it hold up
+        st.markdown(act_header("V", "does it hold up?", "three regimes, one model"),
+                    unsafe_allow_html=True)
+        st.plotly_chart(charts.posterior_strip(cases, tau), use_container_width=True)
+        with st.expander("identifiability — the learned fire-rates φ"):
+            if phi:
+                st.plotly_chart(charts.phi_posteriors(phi), use_container_width=True)
+                st.caption("φ_mule exceeds φ_legit on all six behavioural signals — the 'mule' class is "
+                           "identifiable (no label switching) — while device_shared reverses. So the ring "
+                           "lands high & tight → ESCALATE, decoys low & tight → CLEAR, and AC-0012 (one "
+                           "applicable signal) gets the widest interval, straddles τ → REVIEW.")
+            else:
+                st.caption("Run `uv run python -m ui.stats_pack` to render the learned φ posteriors. "
+                           "Prior expectation: φ_mule≈0.8, φ_legit≈0.2 on behavioural signals; "
+                           "device_shared 0.5/0.5.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 5 — Market (Geo intelligence, digital twin, buyers, outreach)
