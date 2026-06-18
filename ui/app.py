@@ -2350,7 +2350,12 @@ with tab_reasoning:
         _act = case.get("action", "")
         vc = st.columns([1.1, 1])
         with vc[0]:
-            st.plotly_chart(charts.posterior_gauge(case, tau), use_container_width=True)
+            try:
+                st.plotly_chart(charts.posterior_gauge(case, tau), use_container_width=True)
+            except Exception:  # never let one chart white-screen the tab; show the real cause
+                import traceback as _tb
+                st.error("posterior_gauge failed — rendering the verdict without the gauge.")
+                st.code(_tb.format_exc(), language="text")
         with vc[1]:
             _stamp = (f"<div class='stamp {_DEC_CLS.get(_act, 'clr')}' style='transform:none;"
                       f"margin:8px 0 12px;display:inline-block;font-size:16px;padding:6px 14px'>{_act}"

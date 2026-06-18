@@ -12,3 +12,9 @@ font = "monospace"
 headless = true
 runOnSave = true
 enableStaticServing = true   # serve ui/static/* (the standalone constellation HTML)
+
+[client]
+# Show the real exception + traceback on the deployed app instead of the
+# generic "redacted to prevent data leaks" box. This demo has no secrets in
+# its error paths, and a readable error is worth far more during the live demo.
+showErrorDetails = "full"
