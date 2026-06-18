@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -94,6 +95,7 @@ def inject_theme() -> None:
         --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
         --sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
         --serif:'Fraunces',Georgia,serif;
+        --ease-out:cubic-bezier(.23,1,.32,1);   /* Emil's strong ease-out */
       }
       /* ── canvas: ink + blueprint grid + grain + vignette ───────────────── */
       .stApp{
@@ -331,6 +333,84 @@ def inject_theme() -> None:
       .handoff::before{ content:"↳"; color:var(--a); font-size:12px; }
       .handoff b{ color:var(--a); }
 
+      /* ── relay signature visuals (per-agent; reuse rail/ledger/sig/chips) ── */
+      .scard .sviz{ margin:6px 0 12px; }
+      .scard .rail{ margin:24px 6px 22px; }     /* tighten the 26px default for the narrow card */
+      .scard .ledger, .scard .sig{ margin-top:6px; }
+      .scard .chips{ margin-bottom:2px; }
+      .smetrics{ display:flex; gap:9px; margin:11px 0 12px; flex-wrap:wrap; }
+      .smetric{ flex:1 1 0; min-width:96px; border:1px solid var(--line); border-left:2px solid var(--a);
+        border-radius:4px; padding:8px 11px; background:var(--panel); }
+      .smetric .k{ font-family:var(--mono); font-size:8.5px; letter-spacing:.16em; text-transform:uppercase;
+        color:var(--label); }
+      .smetric .v{ font-family:var(--mono); font-size:18px; font-weight:600; color:var(--a); line-height:1.15;
+        margin-top:5px; letter-spacing:-.01em; }
+      .smetric .k2{ font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:4px; line-height:1.4; }
+      .sline{ font-family:var(--mono); font-size:10.5px; color:var(--muted); line-height:1.5; }
+      .sline b{ color:var(--text); font-weight:600; }
+
+      /* ══ TRIAGE BOARD (Queue) — animated, hover-interactive account rail ══ */
+      .tboard{ position:relative; border:1px solid var(--line2); border-radius:7px; overflow:hidden;
+        margin:6px 0 10px; background:radial-gradient(900px 320px at 18% -40%, rgba(95,208,224,.05), transparent 60%), var(--panel);
+        box-shadow:0 26px 70px -42px #000; animation:rise .5s var(--ease-out) both; }
+      .tb-scan{ position:absolute; left:0; right:0; top:0; height:58px; pointer-events:none; z-index:3;
+        background:linear-gradient(180deg, transparent, rgba(95,208,224,.07) 48%, transparent);
+        animation:tbscan 7s linear infinite; }
+      @keyframes tbscan{ 0%{ top:-58px; opacity:0 } 12%{ opacity:1 } 88%{ opacity:1 } 100%{ top:100%; opacity:0 } }
+      .tb-head{ display:flex; align-items:center; gap:18px; padding:11px 18px; border-bottom:1px solid var(--line);
+        font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+        background:rgba(0,0,0,.18); position:relative; z-index:2; flex-wrap:wrap; }
+      .tb-stat{ display:flex; align-items:center; gap:7px; } .tb-stat b{ color:var(--text); font-weight:700; }
+      .tb-stat.esc b{ color:var(--esc) } .tb-stat.rev b{ color:var(--rev) } .tb-stat.clr b{ color:var(--clr) }
+      .tb-tau{ margin-left:auto; color:var(--accent); }
+      .tb-rows{ position:relative; z-index:1; }
+      .qrow{ display:block; text-decoration:none!important; color:var(--text)!important; position:relative;
+        --rc:var(--clr); border-bottom:1px solid var(--line);
+        transition:background .18s var(--ease-out), transform .18s var(--ease-out); }
+      .qrow:last-child{ border-bottom:none; }
+      .qrow.esc{ --rc:var(--esc); } .qrow.rev{ --rc:var(--rev); } .qrow.clr{ --rc:var(--clr); }
+      .qrow::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--rc); opacity:.65; }
+      .qrow:hover{ background:var(--panel2); transform:translateX(3px); }
+      .qrow.active{ background:rgba(95,208,224,.05); }
+      .qrow.active::before, .qrow.esc::before{ opacity:1; }
+      .qr-main{ display:grid; grid-template-columns:34px 132px 1fr 92px 86px; align-items:center; gap:14px;
+        padding:13px 18px; }
+      .qr-rank{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--label); }
+      .qr-id{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--text);
+        display:flex; flex-direction:column; gap:2px; min-width:0; }
+      .qr-id small{ font-size:8px; letter-spacing:.16em; color:var(--label); }
+      .qr-meter{ display:flex; align-items:center; gap:12px; min-width:0; }
+      .qr-track{ position:relative; flex:1; height:8px; border-radius:4px; background:rgba(255,255,255,.05); }
+      .qr-ci{ position:absolute; top:1px; height:6px; border-radius:3px; background:rgba(231,235,243,.14);
+        left:calc(var(--lo)*1%); width:calc((var(--hi) - var(--lo))*1%); }
+      .qr-tau{ position:absolute; top:-3px; bottom:-3px; width:0; border-left:1.5px dashed var(--accent); opacity:.55; }
+      .qr-fill{ position:absolute; top:1px; left:0; height:6px; border-radius:3px; background:var(--rc);
+        width:calc(var(--p)*1%); transform-origin:left; box-shadow:0 0 10px -2px var(--rc);
+        animation:qrfill .9s var(--ease-out) calc(var(--i,0)*.05s) both; }
+      @keyframes qrfill{ from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+      .qr-dot{ position:absolute; top:50%; left:calc(var(--p)*1%); width:9px; height:9px; margin:-4.5px 0 0 -4.5px;
+        border-radius:50%; background:var(--rc); box-shadow:0 0 10px var(--rc); }
+      .qrow.esc .qr-dot{ animation:qrpulse 2.6s ease-in-out infinite; }
+      @keyframes qrpulse{ 0%,100%{ box-shadow:0 0 10px var(--rc) } 50%{ box-shadow:0 0 19px 3px var(--rc) } }
+      .qr-p{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--rc); width:46px; text-align:right; }
+      .qr-pill{ font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.12em; text-align:center;
+        padding:4px 0; border-radius:3px; border:1px solid var(--rc); color:var(--rc);
+        background:color-mix(in srgb, var(--rc) 10%, transparent); }
+      .qr-usd{ font-family:var(--mono); font-size:12px; color:var(--muted); text-align:right; }
+      .qr-sub{ max-height:0; overflow:hidden; opacity:0; display:flex; align-items:center; gap:7px; padding:0 18px;
+        transition:max-height .25s var(--ease-out), opacity .2s var(--ease-out), padding .25s var(--ease-out); }
+      .qrow:hover .qr-sub, .qrow.active .qr-sub{ max-height:54px; opacity:1; padding:0 18px 12px; }
+      .qchip{ font-family:var(--mono); font-size:8.5px; letter-spacing:.03em; padding:2px 7px; border-radius:3px;
+        border:1px solid var(--line2); color:var(--muted); background:var(--void); white-space:nowrap;
+        transition:border-color .18s var(--ease-out), color .18s var(--ease-out); }
+      .qrow:hover .qchip{ border-color:var(--rc); color:var(--text); }
+      .qr-open{ margin-left:auto; font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; color:var(--accent);
+        white-space:nowrap; }
+      @media (prefers-reduced-motion: reduce){
+        .tb-scan, .qr-fill, .qrow.esc .qr-dot{ animation:none!important; }
+        .qr-fill{ transform:scaleX(1)!important; }
+      }
+
       /* ══ LAUNCH CARD — opens the standalone constellation in a new tab ═════ */
       a.launch{ display:flex; align-items:center; gap:24px; text-decoration:none!important;
         color:var(--text)!important; border:1px solid var(--line2); border-radius:7px;
@@ -565,6 +645,120 @@ def inject_theme() -> None:
       @keyframes grow{ from{transform:scaleX(0); opacity:0} to{transform:scaleX(1); opacity:1} }
       @keyframes rise{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
       @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(52,214,164,.5)} 70%{box-shadow:0 0 0 7px rgba(52,214,164,0)} 100%{box-shadow:0 0 0 0 rgba(52,214,164,0)} }
+
+      /* ════════════════════════════════════════════════════════════════════
+         DYNAMIC LAYER — calm motion + hover life. Every loop is slow (~6s),
+         subtle, and disabled under prefers-reduced-motion (bottom of block).
+         ════════════════════════════════════════════════════════════════════ */
+
+      /* unified hover life on info cards — calm lift + the card's own accent glow */
+      .enf-card,.angle-card,.buyer-card,.opener-card,.persona-card,.src-card,.scard{
+        transition:transform .18s var(--ease-out), border-color .18s var(--ease-out),
+                   box-shadow .22s var(--ease-out), background .18s var(--ease-out); }
+      .enf-card:hover{ transform:translateY(-2px); border-color:var(--line2);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--ec,var(--accent)); }
+      .angle-card:hover{ transform:translateY(-2px); border-color:var(--line2);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--ac,var(--accent)); }
+      .buyer-card:hover{ transform:translateY(-2px); border-color:var(--line2);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--bc,var(--accent)); }
+      .opener-card:hover{ transform:translateY(-2px); border-color:var(--line2);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--oc,var(--accent)); }
+      .persona-card:hover{ transform:translateY(-2px);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--pc,var(--accent)); }
+      .src-card:hover{ transform:translateY(-2px); border-color:var(--line2);
+        box-shadow:0 16px 34px -24px #000, 0 0 24px -15px var(--sc,var(--accent)); }
+      .gfeed-item{ transition:background .2s var(--ease-out); }
+      .gfeed-item:hover{ background:rgba(95,208,224,.04); }
+
+      /* ── PIPELINE relay: a calm signal travels 01→05, then loops ───────── */
+      /* node ignites as the signal arrives (shared by relay + ribbon) */
+      @keyframes relayignite{
+        0%,13%,100%{ box-shadow:0 0 0 5px var(--ink),0 0 18px -3px var(--a); border-color:var(--a); transform:scale(1); }
+        5%{ box-shadow:0 0 0 5px var(--ink),0 0 30px 1px var(--a); border-color:#eaf6f8; transform:scale(1.1); } }
+      .relay .snode{ animation:relayignite 6s ease-in-out calc(var(--i,0)*1s) infinite; }
+      /* a bright streak runs down each spine segment, in sequence */
+      .relay .spine::after{ content:""; position:absolute; left:50%; top:0; width:2px; height:24px;
+        margin-left:-1px; border-radius:2px; background:linear-gradient(var(--a),transparent);
+        opacity:0; filter:blur(.4px); z-index:1;
+        animation:spineflow 6s ease-in-out calc(var(--i,0)*1s) infinite; }
+      @keyframes spineflow{ 0%{ top:6px; opacity:0 } 4%{ opacity:.95 } 12%{ top:100%; opacity:0 } 13%,100%{ opacity:0 } }
+
+      /* ── PIPELINE RIBBON hero (horizontal: packet glides node→node) ────── */
+      .prib{ border:1px solid var(--line2); border-radius:6px; padding:18px 24px 16px;
+        margin-bottom:14px; position:relative; overflow:hidden; animation:rise .5s var(--ease-out) both;
+        background:radial-gradient(680px 200px at 12% -30%, rgba(95,208,224,.07), transparent 60%), var(--panel);
+        box-shadow:0 22px 60px -38px #000; }
+      .prib-k{ font-family:var(--mono); font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
+        color:var(--label); margin-bottom:18px; display:flex; align-items:center; gap:9px; }
+      .prib-k b{ color:var(--text); } .prib-k .geodo-brand{ font-style:italic; }
+      .prib-k .dot{ width:6px; height:6px; border-radius:50%; background:var(--clr);
+        box-shadow:0 0 7px var(--clr); animation:pulse 2.4s infinite; }
+      .prib-track{ position:relative; display:flex; justify-content:space-between; align-items:flex-start; }
+      .prib-line{ position:absolute; left:32px; right:32px; top:19px; height:2px; background:var(--line2);
+        opacity:.5; overflow:hidden; }
+      .prib-line::after{ content:""; position:absolute; inset:0;
+        background:linear-gradient(90deg,transparent,var(--accent),transparent);
+        background-size:34% 100%; background-repeat:no-repeat; opacity:.9;
+        animation:ribbonsweep 6s ease-in-out infinite; }
+      @keyframes ribbonsweep{ 0%{ background-position:-34% 0 } 100%{ background-position:134% 0 } }
+      .prib-node{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;
+        gap:6px; flex:1 1 0; min-width:0; }
+      .prib-dot{ width:38px; height:38px; border-radius:50%; background:var(--ink); border:2px solid var(--a);
+        color:var(--a); display:flex; align-items:center; justify-content:center; font-family:var(--mono);
+        font-weight:700; font-size:12px; box-shadow:0 0 0 5px var(--ink),0 0 16px -4px var(--a);
+        animation:relayignite 6s ease-in-out calc(var(--i,0)*1s) infinite; }
+      .prib-name{ font-family:var(--serif); font-size:13.5px; color:var(--text); line-height:1; text-align:center; }
+      .prib-role{ font-family:var(--mono); font-size:7px; letter-spacing:.16em; text-transform:uppercase; color:var(--a); }
+      .prib-add{ font-family:var(--mono); font-size:9px; color:var(--muted); } .prib-add b{ color:var(--a); font-weight:600; }
+      .prib-foot{ font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:14px;
+        padding-top:12px; border-top:1px solid var(--line); text-align:center; line-height:1.6; } .prib-foot b{ color:var(--text); }
+
+      /* ── MCP flow: arrows pulse in sequence (echoes the pipeline) ──────── */
+      .mcp-arrow{ animation:mcparrow 5s ease-in-out calc(var(--i,0)*.6s) infinite; }
+      @keyframes mcparrow{ 0%,18%,100%{ color:var(--line2); text-shadow:none } 7%{ color:var(--accent); text-shadow:0 0 10px var(--accent) } }
+
+      /* ── enforcement timeline: full text on hover + spine draw-in + LATEST pulse ── */
+      .enf-track::before{ transform-origin:top; animation:spinedraw .9s var(--ease-out) both; }
+      @keyframes spinedraw{ from{ transform:scaleY(0) } to{ transform:scaleY(1) } }
+      .enf-action{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+        overflow:hidden; max-height:3.5em; transition:max-height .35s var(--ease-out); }
+      .enf-card:hover .enf-action{ -webkit-line-clamp:99; max-height:40em; }
+      .enf-card--now::before{ animation:nowpulse 2.6s ease-in-out infinite; }
+      @keyframes nowpulse{ 0%,100%{ box-shadow:0 0 8px var(--ec,var(--accent)) }
+        50%{ box-shadow:0 0 18px 2px var(--ec,var(--accent)) } }
+      .enf-now{ font-family:var(--mono); font-size:7.5px; letter-spacing:.14em; color:var(--esc);
+        border:1px solid rgba(255,84,104,.4); border-radius:2px; padding:1px 6px; margin-left:8px; }
+
+      /* ── digital twin: focus the 'after' on hover + one learned-sweep ──── */
+      .twin-text.bef{ transition:opacity .28s var(--ease-out); }
+      .twin-wrap:hover .twin-text.bef{ opacity:.4; }
+      .twin-col.after-col{ position:relative; overflow:hidden; }
+      .twin-col.after-col::after{ content:""; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(90deg,transparent,rgba(52,214,164,.12),transparent);
+        background-size:42% 100%; background-repeat:no-repeat;
+        animation:twinsweep 1.5s var(--ease-out) .45s 1 both; }
+      @keyframes twinsweep{ from{ background-position:-42% 0 } to{ background-position:142% 0 } }
+
+      /* ── memo source cards ─────────────────────────────────────────────── */
+      .src-card{ border:1px solid var(--line); border-radius:5px; background:var(--panel);
+        padding:13px 16px; margin-bottom:9px; position:relative; overflow:hidden; animation:rise .5s var(--ease-out) both; }
+      .src-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--sc,var(--accent)); }
+      .src-title{ font-family:var(--serif); font-size:14.5px; font-weight:600; color:var(--text); line-height:1.25; }
+      .src-title a{ color:var(--text); text-decoration:none; border-bottom:1px solid var(--line2); }
+      .src-title a:hover{ color:var(--accent); border-color:var(--accent); }
+      .src-cite{ font-family:var(--mono); font-size:9px; letter-spacing:.04em; color:var(--label); margin:4px 0 7px; }
+      .src-rel{ font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:8px; }
+      .src-tags{ display:flex; flex-wrap:wrap; gap:4px; }
+      .src-tag{ font-family:var(--mono); font-size:8px; padding:2px 6px; border-radius:2px;
+        border:1px solid rgba(95,208,224,.3); color:var(--accent); background:rgba(95,208,224,.05); }
+
+      /* ── reduced motion: silence the loops, keep everything legible ────── */
+      @media (prefers-reduced-motion: reduce){
+        .relay .snode,.relay .spine::after,.prib-dot,.prib-line::after,.mcp-arrow,
+        .twin-col.after-col::after,.enf-card--now::before,.enf-track::before,
+        .qlive,.cdot.on,.prib-k .dot,.launch-viz .e.p,.launch-viz .e.p2{
+          animation:none!important; }
+      }
     </style>
     """).strip(), unsafe_allow_html=True)
 
@@ -724,6 +918,64 @@ def dossier_html(c: dict, tau: float) -> str:
         + "</div>")
 
 
+def triage_board_html(cases: list, tau: float, selected: str | None = None) -> str:
+    """Animated, hover-interactive triage board — replaces the static strip + table.
+    Each row is a ?acct=<id> query-param link that opens the dossier (no JS needed)."""
+    ranked = sorted(cases, key=lambda c: c.get("p_mule", 0.0), reverse=True)
+    n = len(ranked)
+    n_esc = sum(1 for c in ranked if c.get("action") == "ESCALATE")
+    n_rev = sum(1 for c in ranked if c.get("action") == "REVIEW")
+    n_clr = sum(1 for c in ranked if c.get("action") == "CLEAR")
+    tau_pct = max(0.0, min(100.0, tau * 100.0))
+    rows = ""
+    for i, c in enumerate(ranked):
+        acct = c["account"]
+        act = c.get("action", "")
+        cls = _DEC_CLS.get(act, "clr")
+        p = float(c.get("p_mule") or 0.0)
+        pp = max(0.0, min(100.0, p * 100.0))
+        ci = list(c.get("credible_interval") or [])
+        lo, hi = (ci + [p, p])[:2]
+        lop = max(0.0, min(100.0, lo * 100.0))
+        hip = max(0.0, min(100.0, hi * 100.0))
+        role = (c.get("role") or "—").upper()
+        usd = float((c.get("signals") or {}).get("_transfer_usd") or 0.0)
+        sigs = c.get("decisive_signals") or []
+        if sigs:
+            chips = "".join(f"<span class='qchip'>{s.replace('_', ' ')}</span>" for s in sigs[:5])
+        else:
+            reason = (c.get("detect_reason") or "")[:70]
+            chips = (f"<span class='qchip' style='border-style:dashed'>{reason}</span>"
+                     if reason else "")
+        active = " active" if acct == selected else ""
+        rows += (
+            f"<a class='qrow {cls}{active}' target='_self' href='?acct={acct}' "
+            f"style='--i:{i}; --p:{pp:.2f}; --lo:{lop:.2f}; --hi:{hip:.2f}'>"
+            "<div class='qr-main'>"
+            f"<span class='qr-rank'>{i + 1:02d}</span>"
+            f"<span class='qr-id'>{acct}<small>{role}</small></span>"
+            "<span class='qr-meter'><span class='qr-track'>"
+            "<span class='qr-ci'></span>"
+            f"<span class='qr-tau' style='left:{tau_pct:.2f}%'></span>"
+            "<span class='qr-fill'></span><span class='qr-dot'></span></span>"
+            f"<span class='qr-p'>{p:.3f}</span></span>"
+            f"<span class='qr-pill'>{act}</span>"
+            f"<span class='qr-usd'>${usd:,.0f}</span>"
+            "</div>"
+            f"<div class='qr-sub'>{chips}<span class='qr-open'>open dossier &rarr;</span></div>"
+            "</a>")
+    head = (
+        "<div class='tb-head'>"
+        f"<span class='tb-stat'><span class='qlive'></span>scanning <b>{n}</b> surfaced</span>"
+        f"<span class='tb-stat esc'><b>{n_esc}</b> escalate</span>"
+        f"<span class='tb-stat rev'><b>{n_rev}</b> review</span>"
+        f"<span class='tb-stat clr'><b>{n_clr}</b> clear</span>"
+        f"<span class='tb-tau'>&tau; gate · {tau:.2f}</span>"
+        "</div>")
+    return (f"<div class='tboard'><div class='tb-scan'></div>{head}"
+            f"<div class='tb-rows'>{rows}</div></div>")
+
+
 # ── Bespoke "Agent Relay" — the Case node accreting through Cognee (criterion 2) ─
 _AGENTS = [
     ("01", "Detector", "FIND", "#5fd0e0",
@@ -739,32 +991,142 @@ _AGENTS = [
 _N_MC_FIELDS = 5  # MarketContext fields surfaced in the relay view
 
 
-def _fmt_val(v) -> str:
-    if v is None:
-        return "—"
-    if isinstance(v, bool):
-        return "true" if v else "false"
-    if isinstance(v, float):
-        return f"{v:,.3f}" if abs(v) < 100 else f"{v:,.2f}"
-    if isinstance(v, int):
-        return f"{v:,}"
-    if isinstance(v, str):
-        return (v[:46] + "…") if len(v) > 47 else v
-    if isinstance(v, (list, tuple)):
-        if v and all(isinstance(x, (int, float)) for x in v) and len(v) <= 3:
-            return "[" + ", ".join(f"{x:.3f}" if isinstance(x, float) else str(x) for x in v) + "]"
-        return f"[{len(v)} items]"
-    if isinstance(v, dict):
-        fired = sum(1 for k, val in v.items() if not str(k).startswith("_") and val)
-        keys = [k for k in v if not str(k).startswith("_")]
-        if len(keys) <= 3:
-            return "{" + " · ".join(keys) + "}"
-        extra = f" · {fired} set" if fired else ""
-        return f"{{{len(keys)} fields{extra}}}"
-    return str(v)[:46]
+# ── Per-agent "signature" visuals for the relay cards (reuse dossier components) ─
+def _smetric(k: str, v: str, sub: str = "") -> str:
+    sub_html = f"<div class='k2'>{sub}</div>" if sub else ""
+    return (f"<div class='smetric'><div class='k'>{k}</div>"
+            f"<div class='v'>{v}</div>{sub_html}</div>")
 
 
-def relay_html(c: dict, mc: dict | None = None) -> str:
+def _detector_signature(c: dict) -> str:
+    sig = c.get("signals") or {}
+    ds = c.get("dist_stats") or {}
+    usd = float(sig.get("_transfer_usd", 0.0) or 0.0)
+    ntr = int(sig.get("_n_transfers", 0) or 0)
+    ind = int(sig.get("_in_deg", 0) or 0)
+    outd = int(sig.get("_out_deg", 0) or 0)
+    amax = float(sig.get("_amount_max", 0.0) or 0.0)
+    floor = float(ds.get("inferred_floor_usd") or 0.0)
+    floor_sub = f"vs ${floor:,.0f} floor" if floor else "structuring band"
+    tiles = (_smetric("$ moved", f"${usd:,.0f}", f"{ntr} transfers")
+             + _smetric("graph degree", f"{ind}&rarr;{outd}", "in &rarr; out")
+             + _smetric("max txn", f"${amax:,.0f}", floor_sub))
+    role = (c.get("role") or "—").upper()
+    decoy = (" · <span style='color:var(--noise)'>device-decoy suspect</span>"
+             if c.get("decoy_suspect") else "")
+    return (f"<div class='sviz'>{_chips_html(c)}</div>"
+            f"<div class='smetrics'>{tiles}</div>"
+            f"<div class='sline'>Topological role <b>{role}</b>{decoy}</div>")
+
+
+def _estimator_signature(c: dict, tau: float) -> str:
+    p = float(c.get("p_mule") or 0.0)
+    ci = list(c.get("credible_interval") or [])
+    lo, hi = (ci + [p, p])[:2]
+    cvar = _DEC_VAR.get(c.get("action", ""), "var(--accent)")
+    hero = (f"<div class='smetric'><div class='k'>P(mule)</div>"
+            f"<div class='v' style='color:{cvar}'>{p:.3f}</div>"
+            f"<div class='k2'>94% CI [{lo:.3f} – {hi:.3f}]</div></div>")
+    return (f"<div class='smetrics'>{hero}</div>"
+            f"<div class='sviz'>{_rail_html(c, tau)}</div>"
+            f"<div class='sviz'>{_sigbars_html(c)}</div>")
+
+
+def _adjudicator_signature(c: dict) -> str:
+    act = c.get("action", "")
+    stamp = (f"<div class='stamp {_DEC_CLS.get(act, 'clr')}' "
+             f"style='transform:none;margin-left:0;font-size:15px;padding:6px 12px'>"
+             f"{act}<small>{_DEC_SUB.get(act, '')}</small></div>")
+    q = c.get("quorum")
+    qtxt = "decisive ✓" if q else ("ambiguous — to review" if q is False else "—")
+    head = (f"<div class='sline' style='display:flex;align-items:center;gap:12px;margin-bottom:12px'>"
+            f"{stamp}<span>quorum <b>{qtxt}</b></span></div>")
+    ds = c.get("decisive_signals") or []
+    chips = "".join(f"<span class='chip'>● {s.replace('_', ' ')}</span>" for s in ds)
+    chips_html = f"<div class='chips' style='margin-top:12px'>{chips}</div>" if chips else ""
+    return f"{head}<div class='sviz' style='margin:0'>{_ledger_html(c)}</div>{chips_html}"
+
+
+def _domain_expert_signature(mc: dict) -> str:
+    mc = mc or {}
+    roi = mc.get("roi") or {}
+    tiles_html = ""
+    if roi:
+        sar = float(roi.get("sar_penalty_floor_averted_usd") or 0)
+        exp = float(roi.get("ring_exposure_usd") or 0)
+        hrs = float(roi.get("analyst_hours_reclaimed") or 0)
+        cap = roi.get("capacity_reclaimed_usd") or [0, 0]
+        tiles = (_smetric("penalty averted", f"${sar:,.0f}", "31 CFR §1020.320 floor")
+                 + _smetric("ring exposure", f"${exp:,.0f}", "flagged flow")
+                 + _smetric("analyst hrs", f"{hrs:.0f} hrs", f"${cap[0]:,.0f}–${cap[1]:,.0f} reclaimed"))
+        tiles_html = f"<div class='smetrics'>{tiles}</div>"
+    callout = ""
+    intents = mc.get("intent_signals") or []
+    if intents:
+        it = intents[0]
+        inst = it.get("institution", "")
+        url = it.get("url", "")
+        inst_html = (f"<a href='{url}' target='_blank' rel='noopener' "
+                     f"style='color:var(--text);text-decoration:none;border-bottom:1px solid var(--line2)'>{inst}</a>"
+                     if url else inst)
+        action = (it.get("action") or "")[:180]
+        tags = "".join(f"<span class='enf-sig'>{t.replace('_', ' ')}</span>"
+                       for t in (it.get("signal_tags") or []))
+        callout = (
+            "<div class='callout' style='border-left-color:var(--a)'>"
+            "<span class='mk' style='color:var(--a)'>⚑</span><div>"
+            f"<b>Why now</b> · {inst_html} "
+            f"<span style='color:var(--label)'>{it.get('date', '')}</span><br>{action}"
+            f"<div class='enf-signals' style='margin-top:7px'>{tags}</div></div></div>")
+    thesis = (mc.get("buyer_thesis") or "").strip()
+    thesis_html = f"<div class='geo-quote' style='margin:10px 0 0'>{thesis}</div>" if thesis else ""
+    seg = (mc.get("segment") or "").strip()
+    seg_html = f"<div class='sline' style='margin-top:9px'>Segment · <b>{seg}</b></div>" if seg else ""
+    return f"{tiles_html}{callout}{thesis_html}{seg_html}"
+
+
+def _reporter_signature(c: dict) -> str:
+    typ = (c.get("typology") or "").strip()
+    memo = c.get("memo_ref") or ""
+    dollar = float(c.get("dollar_contribution") or 0.0)
+    closing = (c.get("closing_rule") or "").strip()
+    ds = c.get("decisive_signals") or []
+    cites = c.get("citations") or []
+    if not (typ or closing or cites or dollar):
+        return ("<div class='sline' style='color:var(--label)'>No SAR memo written — "
+                "account cleared or sent to human review (the Reporter writes only for escalations).</div>")
+    base = float((c.get("signals") or {}).get("_transfer_usd") or 0.0) or dollar or 1.0
+    typ_html = ""
+    if typ:
+        memo_badge = f"<span class='srole' style='margin-left:8px'>{memo}</span>" if memo else ""
+        typ_html = (f"<div class='sline' style='margin-bottom:11px'>"
+                    f"<span class='sname' style='font-size:16px'>{typ}</span>{memo_badge}</div>")
+    bar = ""
+    if dollar:
+        w = max(2.0, min(100.0, dollar / base * 100.0))
+        bar = ("<div class='ledger' style='margin:0 0 4px'>"
+               "<div class='lr win' style='--c:var(--clr)'>"
+               "<span class='lk'>$ contribution</span>"
+               f"<span class='lbar'><i style='width:{w:.1f}%'></i></span>"
+               f"<span class='lv'>${dollar:,.0f}</span></div></div>")
+    chips = "".join(f"<span class='src-tag'>{s.replace('_', ' ')}</span>" for s in ds)
+    chips_html = f"<div class='src-tags' style='margin:11px 0'>{chips}</div>" if chips else ""
+    cite_html = ""
+    for ct in cites[:3]:
+        title = ct.get("title", "")
+        url = ct.get("url", "")
+        t_html = (f"<a href='{url}' target='_blank' rel='noopener'>{title}</a>" if url else title)
+        cite_html += (f"<div class='src-card' style='--sc:var(--clr);margin-bottom:6px'>"
+                      f"<div class='src-title' style='font-size:12.5px'>{t_html}</div>"
+                      f"<div class='src-cite'>{ct.get('citation', '')}</div></div>")
+    closing_html = ""
+    if closing:
+        closing_html = ("<div class='sline' style='margin:11px 0 6px'>Learned closing rule</div>"
+                        f"<div class='dlog'>{closing}</div>")
+    return f"{typ_html}{bar}{chips_html}{cite_html}{closing_html}"
+
+
+def relay_html(c: dict, mc: dict | None = None, tau: float = 0.05) -> str:
     mc = mc or {}
     counts = [(len(fields) if fields is not None else _N_MC_FIELDS)
               for *_, fields in _AGENTS]
@@ -795,51 +1157,39 @@ def relay_html(c: dict, mc: dict | None = None) -> str:
         "</div>")
     # vertical relay of stages
     stages = ""
-    for (num, name, role, color, fields) in _AGENTS:
+    for i, (num, name, role, color, fields) in enumerate(_AGENTS):
         reads_case = cum
         if fields is None:
             # Domain Expert — reads decisive_signals from Case, writes MarketContext
-            _de = {
-                "segment": (mc.get("segment") or "")[:58] or "—",
-                "buyer_thesis": (mc.get("buyer_thesis") or "")[:58] or "—",
-                "top_intent": (((mc.get("intent_signals") or [{}])[0]).get("institution", "—")),
-                "sar_penalty_averted": (
-                    f"${mc['roi']['sar_penalty_floor_averted_usd']:,.0f}"
-                    if (mc.get("roi") or {}).get("sar_penalty_floor_averted_usd") else "—"),
-                "research_grounded": "✓" if mc.get("research_grounded") else "—",
-            }
-            rows = "".join(
-                f"<div class='frow'><span class='fk'>{fname}</span>"
-                f"<span class='fv'>{_fmt_val(fval)}</span></div>"
-                for fname, fval in _de.items())
-            n_written = len(_de)
             stages += (
-                f"<div class='stage' style='--a:{color}'>"
+                f"<div class='stage' style='--a:{color}; --i:{i}'>"
                 f"<div class='spine'><div class='snode'>{num}</div></div>"
                 "<div class='scard' style='border-style:dashed'>"
                 "<div class='shead'>"
                 f"<div><span class='sname'>{name}</span><span class='srole'>{role}</span></div>"
                 f"<div class='sio'><span>reads {reads_case} [Case]</span>"
-                f"<span class='w'>writes +{n_written} [MarketCtx]</span></div>"
+                f"<span class='w'>writes +{_N_MC_FIELDS} [MarketCtx]</span></div>"
                 "</div>"
                 f"<div style='font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;"
                 f"color:{color};margin-bottom:10px;text-transform:uppercase;padding:3px 8px;"
                 f"border:1px dashed {color}40;border-radius:3px;display:inline-block'>"
                 f"Cognee entity: MarketContext (<span class='geodo-brand'>geodo.ai</span>-grounded · separate from Case)</div>"
-                f"<div class='fields'>{rows}</div>"
+                f"{_domain_expert_signature(mc)}"
                 f"<div class='handoff'>Writes <b>MarketContext</b> to Cognee &mdash; "
                 f"Reporter reads Case + this <span class='geodo-brand'>geodo.ai</span>-grounded entity</div>"
                 "</div></div>")
         else:
-            rows = "".join(
-                f"<div class='frow'><span class='fk'>{f}</span>"
-                f"<span class='fv'>{_fmt_val(c.get(f))}</span></div>"
-                for f in fields)
             cum += len(fields)
             extra_reads = (f" + {_N_MC_FIELDS} [MarketCtx]"
                            if name == "Reporter" else "")
+            sig_html = {
+                "Detector": lambda: _detector_signature(c),
+                "Estimator": lambda: _estimator_signature(c, tau),
+                "Adjudicator": lambda: _adjudicator_signature(c),
+                "Reporter": lambda: _reporter_signature(c),
+            }.get(name, lambda: "")()
             stages += (
-                f"<div class='stage' style='--a:{color}'>"
+                f"<div class='stage' style='--a:{color}; --i:{i}'>"
                 f"<div class='spine'><div class='snode'>{num}</div></div>"
                 "<div class='scard'>"
                 "<div class='shead'>"
@@ -847,11 +1197,40 @@ def relay_html(c: dict, mc: dict | None = None) -> str:
                 f"<div class='sio'><span>reads {reads_case}{extra_reads}</span>"
                 f"<span class='w'>writes +{len(fields)}</span></div>"
                 "</div>"
-                f"<div class='fields'>{rows}</div>"
+                f"{sig_html}"
                 f"<div class='handoff'>Handoff via Cognee &mdash; Case now carries "
                 f"<b>{cum} fields</b></div>"
                 "</div></div>")
     return f"<div class='relay'>{accum}<div class='stages'>{stages}</div></div>"
+
+
+def pipeline_ribbon_html(c: dict, mc: dict | None = None) -> str:
+    """Horizontal 'signal flow' hero — a packet glides Detector→Reporter on a calm
+    loop, each agent igniting as it arrives; mirrors the vertical relay below."""
+    nodes = ""
+    cum = 0
+    for i, (num, name, role, color, fields) in enumerate(_AGENTS):
+        n = len(fields) if fields is not None else _N_MC_FIELDS
+        entity = "MktCtx" if fields is None else "Case"
+        nodes += (
+            f"<div class='prib-node' style='--a:{color}; --i:{i}'>"
+            f"<div class='prib-dot'>{num}</div>"
+            f"<div class='prib-name'>{name}</div>"
+            f"<div class='prib-role'>{role}</div>"
+            f"<div class='prib-add'>+{n} <span style='opacity:.6'>{entity}</span></div>"
+            "</div>")
+        if fields is not None:
+            cum += len(fields)
+    return (
+        "<div class='prib'>"
+        f"<div class='prib-k'><span class='dot'></span>Signal flow · "
+        f"Case::{c['account']} accreting through Cognee · live loop</div>"
+        "<div class='prib-track'><div class='prib-line'></div>"
+        f"{nodes}</div>"
+        f"<div class='prib-foot'>One <b>Case</b> object travels all five agents — accreting "
+        f"<b>{cum} fields</b> end-to-end — plus <b>{_N_MC_FIELDS}</b> more in a separate "
+        f"<span class='geodo-brand'>geodo.ai</span>-grounded <b>MarketContext</b> entity.</div>"
+        "</div>")
 
 
 def _rgba(hex_color: str, alpha: float) -> str:
@@ -886,7 +1265,7 @@ def enforcement_timeline_html(signals: list) -> str:
     if not signals:
         return "<p style='color:var(--muted);font-family:var(--mono);font-size:11px'>No matched enforcement actions.</p>"
     cards = ""
-    for s in signals:
+    for i, s in enumerate(signals):
         sid = s.get("id", "")
         if "occ" in sid:
             badge, ec = "OCC", "#5fd0e0"
@@ -900,14 +1279,16 @@ def enforcement_timeline_html(signals: list) -> str:
         url = s.get("url", "")
         inst_html = (f"<a href='{url}' target='_blank' style='color:var(--text);text-decoration:none'>"
                      f"{s.get('institution','')}</a>" if url else s.get("institution", ""))
+        now_cls = " enf-card--now" if i == 0 else ""
+        now_badge = "<span class='enf-now'>● LATEST</span>" if i == 0 else ""
         cards += (
-            f"<div class='enf-card' style='--ec:{ec}'>"
+            f"<div class='enf-card{now_cls}' style='--ec:{ec}'>"
             f"<div class='enf-top'>"
             f"<span class='enf-badge' style='color:{ec};border:1px solid {ec}30;background:{ec}12'>{badge}</span>"
-            f"<span class='enf-inst'>{inst_html}</span>"
+            f"<span class='enf-inst'>{inst_html}</span>{now_badge}"
             f"<span class='enf-date'>{s.get('date','')}</span>"
             f"</div>"
-            f"<div class='enf-action'>{action[:240]}</div>"
+            f"<div class='enf-action'>{action[:600]}</div>"
             f"<div class='enf-signals'>{sigs}</div>"
             f"</div>")
     return f"<div class='enf-wrap'><div class='enf-track'>{cards}</div></div>"
@@ -1017,7 +1398,7 @@ def mcp_flow_html(tools: list) -> str:
             f"</div>"
         )
         if i < len(tools) - 1:
-            nodes += "<div class='mcp-arrow'>→</div>"
+            nodes += f"<div class='mcp-arrow' style='--i:{i}'>→</div>"
     n = len(tools)
     return (
         "<div class='mcp-wrap'>"
@@ -1075,7 +1456,7 @@ def twin_html(packet: dict) -> str:
         "<span class='twin-dot' style='background:var(--label)'></span>Before teaching</div>"
         f"<div class='twin-text bef'>{before}</div>"
         "</div>"
-        "<div class='twin-col'>"
+        "<div class='twin-col after-col'>"
         "<div class='twin-lab' style='color:var(--clr)'>"
         "<span class='twin-dot' style='background:var(--clr)'></span>After teaching</div>"
         f"<div class='twin-text aft'>{after}</div>"
@@ -1134,25 +1515,75 @@ def opener_cards_html(openers: list) -> str:
     return cards
 
 
-def roi_html(roi: dict) -> str:
-    sar = roi.get("sar_penalty_floor_averted_usd", 0)
-    exp = roi.get("ring_exposure_usd", 0)
-    hrs = roi.get("analyst_hours_reclaimed", 0)
-    cap = roi.get("capacity_reclaimed_usd", [0, 0])
-    rate = roi.get("analyst_rate_usd_per_hr", [50, 80])
-    basis = roi.get("basis", "")
-    tiles = "".join([
-        _tile("Penalty floor averted", f"${sar:,.0f}", "31 CFR §1020.320 floor \xb7 9 SARs",
-              "var(--esc)"),
-        _tile("Ring flow flagged", f"${exp:,.0f}", "Detector-reconstructed ring", "var(--accent)"),
-        _tile("Analyst hours reclaimed", f"{hrs:.0f} hrs",
-              f"${cap[0]:,.0f}–${cap[1]:,.0f} @ geodo.ai rate ${rate[0]}–${rate[1]}/hr",
-              "var(--clr)"),
-    ])
-    basis_html = (f"<div style='font-family:var(--mono);font-size:9px;color:var(--label);"
-                  f"margin-top:6px;line-height:1.6'>{basis}</div>") if basis else ""
-    return (f"<div class='qkpis' style='grid-template-columns:repeat(3,1fr)'>{tiles}</div>"
-            f"{basis_html}")
+def source_cards_html(precedents: list) -> str:
+    """Regulatory precedents as hover cards (title · citation · relevance · signal chips)."""
+    COLORS = ["#5fd0e0", "#8ab4ff", "#f7b733", "#b48aff", "#34d6a4"]
+    cards = ""
+    for i, p in enumerate(precedents or []):
+        color = COLORS[i % len(COLORS)]
+        url = p.get("url", "")
+        title = p.get("title", "")
+        title_html = (f"<a href='{url}' target='_blank' rel='noopener'>{title}</a>"
+                      if url else title)
+        tags = "".join(f"<span class='src-tag'>{t.replace('_',' ')}</span>"
+                       for t in (p.get("signal_tags") or []))
+        cards += (
+            f"<div class='src-card' style='--sc:{color}'>"
+            f"<div class='src-title'>{title_html}</div>"
+            f"<div class='src-cite'>{p.get('citation','')}</div>"
+            f"<div class='src-rel'>{p.get('relevance','')}</div>"
+            f"<div class='src-tags'>{tags}</div>"
+            "</div>")
+    return cards
+
+
+def roi_component_html(roi: dict) -> str:
+    """Self-contained iframe (st.components) so the ROI figures count up from zero
+    with locale formatting — the one place a JS island earns its keep. Respects
+    prefers-reduced-motion (renders final values instantly)."""
+    sar = float(roi.get("sar_penalty_floor_averted_usd", 0) or 0)
+    exp = float(roi.get("ring_exposure_usd", 0) or 0)
+    hrs = float(roi.get("analyst_hours_reclaimed", 0) or 0)
+    cap = roi.get("capacity_reclaimed_usd", [0, 0]) or [0, 0]
+    rate = roi.get("analyst_rate_usd_per_hr", [50, 80]) or [50, 80]
+    tiles = [
+        ("Penalty floor averted", sar, "$", "", "31 CFR §1020.320 floor · 9 SARs", "#ff5468"),
+        ("Ring flow flagged", exp, "$", "", "Detector-reconstructed ring", "#5fd0e0"),
+        ("Analyst hours reclaimed", hrs, "", " hrs",
+         f"${cap[0]:,.0f}–${cap[1]:,.0f} @ geodo.ai rate ${rate[0]}–${rate[1]}/hr", "#34d6a4"),
+    ]
+    cells = ""
+    for label, val, pre, suf, sub, color in tiles:
+        cells += (
+            f"<div class='kpi' style='--c:{color}'>"
+            f"<div class='lab'>{label}</div>"
+            f"<div class='val' data-to='{val:.0f}' data-prefix='{pre}' data-suffix='{suf}'>{pre}0{suf}</div>"
+            f"<div class='sub'>{sub}</div></div>")
+    return ("""<!doctype html><html><head><meta charset='utf-8'>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:#0a0c11;font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:1px}
+  .kpi{border:1px solid rgba(178,198,234,.10);border-radius:4px;background:#0f131b;
+       padding:13px 15px 12px;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--c)}
+  .lab{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#7b859b}
+  .val{font-size:27px;font-weight:600;color:var(--c);line-height:1.1;margin-top:7px;
+       letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .sub{font-size:10px;color:#8a93a6;margin-top:6px;line-height:1.5}
+</style></head><body><div class='row'>__CELLS__</div>
+<script>
+  var R=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fmt(n,p,s){return p+Math.round(n).toLocaleString('en-US')+s;}
+  document.querySelectorAll('.val').forEach(function(el){
+    var to=parseFloat(el.dataset.to)||0,p=el.dataset.prefix||'',s=el.dataset.suffix||'',d=1500,t0=null;
+    if(R){el.textContent=fmt(to,p,s);return;}
+    function step(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/d);var e=1-Math.pow(1-k,3);
+      el.textContent=fmt(to*e,p,s);if(k<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  });
+</script></body></html>""").replace("__CELLS__", cells)
 
 
 def _run_pipeline(csv_path: str) -> dict:
@@ -1285,12 +1716,12 @@ if st.session_state.result is not None:
         "chases) but is isolated in the money graph. Flagging them is the easy mistake; "
         "Quorum holds their probability near zero and **clears them instead of escalating**.")
 
-# Pipeline sits at position 2 — the agent-collaboration proof (criterion 2) is the
-# headline, so it's surfaced right after the Queue rather than buried last. Tabs are
-# bound by name below, so this display order and the content blocks stay decoupled.
-(tab_queue, tab_pipeline, tab_constellation, tab_case, tab_signatures,
+# Tabs are bound by name (the `with tab_X:` blocks below), so this display order is
+# decoupled from the content order in code. Lead with the interactive visuals
+# (Constellation, then Case detail) before the Pipeline collaboration proof.
+(tab_queue, tab_constellation, tab_case, tab_pipeline, tab_signatures,
  tab_memo, tab_market) = st.tabs(
-    ["📋 Queue", "🧠 Pipeline", "🌐 Constellation", "🔎 Case detail",
+    ["📋 Queue", "🌐 Constellation", "🔎 Case detail", "🧠 Pipeline",
      "🧬 Signatures", "📄 Memo", "🎯 Market"])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1344,57 +1775,58 @@ with tab_queue:
                 st.session_state.force_upload = True
                 st.rerun()
 
-        st.plotly_chart(charts.posterior_strip(r["cases"], adj["tau"]),
-                        use_container_width=True)
+        # Selection lives in the URL: each board row is a ?acct=<id> link, so a click
+        # reloads with that account selected (no JS, no custom component needed).
+        valid_accts = {c["account"] for c in r["cases"]}
+        qp_acct = st.query_params.get("acct")
+        if qp_acct in valid_accts:
+            st.session_state.selected = qp_acct
+        sel_acct = st.session_state.selected if st.session_state.selected in valid_accts else None
 
-        show_cleared = st.toggle("Show cleared accounts (decoys)", value=True)
-        cases = sorted(r["cases"], key=lambda c: c.get("p_mule", 0), reverse=True)
-        rows = []
-        for c in cases:
-            act = c.get("action", "")
-            if act == "CLEAR" and not show_cleared:
-                continue
-            lo, hi = c.get("credible_interval", [0, 0])
-            rows.append({
-                "Account": c["account"],
-                "Decision": f"{ACTION_EMOJI.get(act,'')} {act}",
-                "Role": (c.get("role") or "").upper(),
-                "P(mule)": round(c.get("p_mule", 0), 3),
-                "Uncertainty": f"[{lo:.3f} – {hi:.3f}]",
-                "$ moved": round((c.get("signals") or {}).get("_transfer_usd", 0.0), 0),
-                "Why (decisive signals)": ", ".join(c.get("decisive_signals") or [])
-                    or (c.get("detect_reason", "")[:60]),
-            })
-        df = pd.DataFrame(rows)
-        event = st.dataframe(
-            df, use_container_width=True, hide_index=True,
-            on_select="rerun", selection_mode="single-row",
-            column_config={
-                "P(mule)": st.column_config.ProgressColumn(
-                    "P(mule)", min_value=0.0, max_value=1.0, format="%.3f"),
-                "$ moved": st.column_config.NumberColumn("$ moved", format="$%d"),
-                "Decision": st.column_config.TextColumn("Decision", width="small"),
-            })
-        selection = event.get("selection") if event else None
-        sel_rows = selection.get("rows", []) if selection else []
-        if sel_rows:
-            st.session_state.selected = df.iloc[sel_rows[0]]["Account"]
-        st.caption(f"The {n_total - len(cases)} accounts with no firing signal were "
-                   f"auto-cleared by the Detector and never surfaced. "
-                   f"Click a row to open its full case dossier below.")
-
-        # Inline dossier: clicking a row opens the full breakdown right here, so the
-        # analyst never has to hunt for another tab. (The 🔎 Case detail tab is the
-        # same view with an account picker + ring subgraph + memo download.)
-        if sel_rows:
-            sel_acct = st.session_state.selected
+        # Dossier opens ABOVE the board so it's in view immediately after the click→reload.
+        if sel_acct:
             sel_case = next((c for c in r["cases"] if c["account"] == sel_acct), None)
             if sel_case is not None:
-                st.markdown(f"<div class='qsec'>Case dossier · "
-                            f"<span class='num'>{sel_acct}</span> — "
-                            f"full breakdown · more on the 🔎 Case detail tab</div>",
-                            unsafe_allow_html=True)
+                st.markdown(
+                    f"<div class='qsec'>Case dossier · <span class='num'>{sel_acct}</span> "
+                    f"&nbsp;·&nbsp; <a href='?' target='_self' style='color:var(--muted);"
+                    f"text-decoration:none;font-family:var(--mono);font-size:10px;"
+                    f"letter-spacing:.1em'>✕ CLOSE</a></div>",
+                    unsafe_allow_html=True)
                 st.markdown(dossier_html(sel_case, adj["tau"]), unsafe_allow_html=True)
+
+        # The animated triage board — replaces the static strip + plain dataframe.
+        st.markdown(triage_board_html(r["cases"], adj["tau"], sel_acct),
+                    unsafe_allow_html=True)
+        st.caption(f"{n_total - len(r['cases'])} accounts with no firing signal were "
+                   f"auto-cleared by the Detector and never surfaced. Click any row to open "
+                   f"its full dossier · the sortable data table is below.")
+
+        # Power-user view: the precise, sortable table (read-only — selection is the board).
+        with st.expander("⊞ Sortable data table"):
+            _ranked = sorted(r["cases"], key=lambda c: c.get("p_mule", 0), reverse=True)
+            _rows = []
+            for c in _ranked:
+                act = c.get("action", "")
+                lo, hi = c.get("credible_interval", [0, 0])
+                _rows.append({
+                    "Account": c["account"],
+                    "Decision": f"{ACTION_EMOJI.get(act,'')} {act}",
+                    "Role": (c.get("role") or "").upper(),
+                    "P(mule)": round(c.get("p_mule", 0), 3),
+                    "Uncertainty": f"[{lo:.3f} – {hi:.3f}]",
+                    "$ moved": round((c.get("signals") or {}).get("_transfer_usd", 0.0), 0),
+                    "Why (decisive signals)": ", ".join(c.get("decisive_signals") or [])
+                        or (c.get("detect_reason", "")[:60]),
+                })
+            st.dataframe(
+                pd.DataFrame(_rows), use_container_width=True, hide_index=True,
+                column_config={
+                    "P(mule)": st.column_config.ProgressColumn(
+                        "P(mule)", min_value=0.0, max_value=1.0, format="%.3f"),
+                    "$ moved": st.column_config.NumberColumn("$ moved", format="$%d"),
+                    "Decision": st.column_config.TextColumn("Decision", width="small"),
+                })
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 1b — Constellation (the interactive 3D drag-and-drop ring graph)
@@ -1568,13 +2000,7 @@ with tab_memo:
                 st.markdown(f"🧑‍⚖️ **Domain review** — {rv['name']}, _{rv['role']}_ "
                             f"({rv['date']}): {rv['scope']}")
                 st.divider()
-            for p in geo["precedents"]:
-                st.markdown(
-                    f"**[{p['title']}]({p['url']})** &nbsp;·&nbsp; _{p['citation']}_  \n"
-                    f"{p['relevance']}  \n"
-                    f"<span style='color:#8b93b5;font-size:12px'>signals: "
-                    f"{', '.join(p['signal_tags'])}</span>",
-                    unsafe_allow_html=True)
+            st.markdown(source_cards_html(geo["precedents"]), unsafe_allow_html=True)
             st.markdown("**Cost matrix provenance** (the figures behind τ):")
             for name, cb in geo["cost_basis"].items():
                 src = f"[{cb['source']}]({cb['url']})" if cb.get("url") else cb["source"]
@@ -1651,7 +2077,13 @@ with tab_market:
                 "<div class='geo-sec'>Business Case · "
                 "<b><span class='geodo-brand'>geodo.ai</span> labor rate × this run&#8217;s actuals</b></div>",
                 unsafe_allow_html=True)
-            st.markdown(roi_html(roi), unsafe_allow_html=True)
+            components.html(roi_component_html(roi), height=135, scrolling=False)
+            _basis = roi.get("basis", "")
+            if _basis:
+                st.markdown(
+                    f"<div style='font-family:var(--mono);font-size:9px;color:var(--label);"
+                    f"margin-top:2px;line-height:1.6'>{_basis}</div>",
+                    unsafe_allow_html=True)
 
         # ── Digital twin learning ──────────────────────────────────────────
         if packet:
@@ -1722,7 +2154,9 @@ with tab_pipeline:
         sel = st.selectbox("Trace this account's Case node through the pipeline", accts,
                            key="pipeline_sel")
         c = cases_by_acct[sel]
-        st.markdown(relay_html(c, r.get("market_context")), unsafe_allow_html=True)
+        st.markdown(pipeline_ribbon_html(c, r.get("market_context")), unsafe_allow_html=True)
+        st.markdown(relay_html(c, r.get("market_context"), r["adjudicator"]["tau"]),
+                    unsafe_allow_html=True)
 
         st.markdown("<div class='qsec'>Cognee semantic graph · "
                     "<span class='num'>natural-language layer (Gemini)</span></div>",

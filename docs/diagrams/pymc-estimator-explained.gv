@@ -1,0 +1,121 @@
+// Beginner-friendly + rigorous data-flow of Agent 2 (Estimator), with properly
+// typeset math (real symbols, sub/superscripts). Merges the friendly plain-English
+// framing with the equations. Render with the graphviz `dot` binary:
+//   dot -Tpng -Gdpi=200 docs/diagrams/pymc-estimator-explained.gv -o docs/diagrams/pymc-estimator-explained.png
+//
+// Each box: BOLD headline · muted plain-English · monospace equation. Side notes are
+// dashed. A convergence-check diamond adds the only "loop" a Bayesian model honestly
+// has (resample until the chains agree). Palette: cool throughout, warm accents on
+// the mixture (amber), the check (orange) and the posterior (rose).
+digraph estimator {
+  bgcolor="#0a0c11";
+  rankdir=TB; nodesep=0.45; ranksep=0.6;
+  fontname="Helvetica"; fontcolor="#e8eefc"; fontsize=22; labelloc="t";
+  label=<<BR/><B>Agent 2 · ESTIMATOR</B> — masked two-component Bayesian mixture (PyMC / NUTS)<BR/><FONT POINT-SIZE="13" COLOR="#9aa4bf">agents/ranker.py · the class-conditional fire-rates are LEARNED, not asserted</FONT><BR/> >;
+
+  node [shape=box, style="filled,rounded", penwidth=1.8, margin="0.22,0.14",
+        fontname="Helvetica", fontcolor="#e8eefc"];
+  edge [penwidth=1.7, arrowsize=0.8];
+
+  // ── main pipeline ─────────────────────────────────────────────────────
+  inputs [color="#5fd0e0", fillcolor="#0e3a44", label=<
+    <B><FONT POINT-SIZE="15">INPUTS</FONT></B> <FONT POINT-SIZE="11" COLOR="#a9c6d6">— the clues, from the Detector</FONT><BR/>
+    <FONT POINT-SIZE="11" COLOR="#cfe6ee">each account has up to 7 yes/no red flags</FONT><BR/> <BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#eafaff">X, M &#8712; {0,1}<SUP>N&#215;7</SUP> &#160; · &#160; X = observed, &#160;M = applicability mask</FONT>>];
+
+  priors [color="#8ab4ff", fillcolor="#16294f", label=<
+    <B><FONT POINT-SIZE="15">PRIORS</FONT></B> <FONT POINT-SIZE="11" COLOR="#9fb6e6">— belief before evidence (weakly-informative, conjugate Beta)</FONT><BR/>
+    <FONT POINT-SIZE="11" COLOR="#cfe0ff">mules trip flags often, honest accounts rarely; mules are rare</FONT><BR/> <BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#eaf1ff">&#960; ~ Beta(1, 9) &#160;&#160; (mixing weight, prevalence)</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#eaf1ff">&#966;<SUB>mule,k</SUB> ~ Beta(4, 1) &#160; · &#160; &#966;<SUB>legit,k</SUB> ~ Beta(1, 4)</FONT>>];
+
+  lik [color="#b794ff", fillcolor="#2e1b54", label=<
+    <B><FONT POINT-SIZE="15">MASKED LIKELIHOOD</FONT></B> <FONT POINT-SIZE="11" COLOR="#c3b0e6">— how well each account fits each class</FONT><BR/>
+    <FONT POINT-SIZE="11" COLOR="#e0d6f6">a product of Bernoullis (flags independent given the class)</FONT><BR/> <BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#f1eaff">ll<SUB>c</SUB>(i) = &#931;<SUB>k</SUB> M<SUB>ik</SUB> · [ X<SUB>ik</SUB> log &#966;<SUB>c,k</SUB> + (1&#8722;X<SUB>ik</SUB>) log(1&#8722;&#966;<SUB>c,k</SUB>) ]</FONT>>];
+
+  mix [color="#f7b733", fillcolor="#4a3410", label=<
+    <B><FONT POINT-SIZE="15">MIXTURE</FONT></B> <FONT POINT-SIZE="11" COLOR="#e6cf9a">— one unsupervised two-component mixture model</FONT><BR/>
+    <FONT POINT-SIZE="11" COLOR="#ffe9bf">each account's class (mule vs honest) is latent — learned, not given</FONT><BR/> <BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#fff3da">log p(X<SUB>i</SUB>) = logsumexp( log &#960; + ll<SUB>mule</SUB> , &#160;log(1&#8722;&#960;) + ll<SUB>legit</SUB> )</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#fff3da">obs = &#931;<SUB>i</SUB> log p(X<SUB>i</SUB>) &#160;&#160; (entered via pm.Potential)</FONT>>];
+
+  samp [color="#34d6a4", fillcolor="#123a2c", shape=ellipse, label=<
+    <B><FONT POINT-SIZE="15">SAMPLING — explore the posterior (MCMC)</FONT></B><BR/>
+    <FONT POINT-SIZE="11" COLOR="#a6e6cf">NUTS, the No-U-Turn Sampler — a form of Hamiltonian Monte Carlo</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#ccfaeb">draw {&#960;, &#966;}<SUP>(s)</SUP> ~ p(&#960;, &#966; | X), &#160;s = 1…S</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#ccfaeb">pm.sample · nutpie · 4 chains · target_accept 0.95 · seed 0</FONT>>];
+
+  check [color="#fb923c", fillcolor="#4a2a10", shape=diamond, label=<
+    <B><FONT POINT-SIZE="14">CONVERGENCE CHECK</FONT></B><BR/>
+    <FONT POINT-SIZE="11" COLOR="#ffd9b8">did the 4 chains agree?</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ffe2c2">R&#770; &#8776; 1 (Gelman-Rubin) · diverg.= 0 · ESS high</FONT>>];
+
+  theta [color="#ff7ad9", fillcolor="#4a1640", label=<
+    <B><FONT POINT-SIZE="15">POSTERIOR</FONT></B> <FONT POINT-SIZE="11" COLOR="#f3b0de">— the verdict, per account</FONT><BR/>
+    <FONT POINT-SIZE="11" COLOR="#ffd9ee">&#952; = posterior membership, the 'responsibility' — a full distribution</FONT><BR/> <BR/>
+    <FONT FACE="Menlo" POINT-SIZE="12" COLOR="#ffe6f6">&#952;<SUB>i</SUB> = P(mule | X<SUB>i</SUB>) = &#960; p(X<SUB>i</SUB>|mule) / [ &#960; p(X<SUB>i</SUB>|mule) + (1&#8722;&#960;) p(X<SUB>i</SUB>|legit) ]</FONT>>];
+
+  outP [color="#34d6a4", fillcolor="#123a2c", label=<
+    <B><FONT POINT-SIZE="13">p_mule</FONT></B> <FONT POINT-SIZE="10" COLOR="#a6e6cf">— headline number</FONT><BR/>
+    <FONT POINT-SIZE="10" COLOR="#cdfaec">posterior mean</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ccfaeb">E[&#952;<SUB>i</SUB>] &#8776; (1/S) &#931;<SUB>s</SUB> &#952;<SUB>i</SUB><SUP>(s)</SUP></FONT>>];
+
+  outCI [color="#34d6a4", fillcolor="#123a2c", label=<
+    <B><FONT POINT-SIZE="13">94% credible interval</FONT></B><BR/>
+    <FONT POINT-SIZE="10" COLOR="#cdfaec">highest-density interval (HDI)</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ccfaeb">shortest [lo,hi] : P(lo &#8804; &#952;<SUB>i</SUB> &#8804; hi) = .94</FONT>>];
+
+  outC [color="#34d6a4", fillcolor="#123a2c", label=<
+    <B><FONT POINT-SIZE="13">signal_contributions</FONT></B><BR/>
+    <FONT POINT-SIZE="10" COLOR="#cdfaec">weight of evidence per fired flag</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ccfaeb">w<SUB>k</SUB> = log &#966;<SUB>mule,k</SUB> &#8722; log &#966;<SUB>legit,k</SUB> &#160;(log Bayes factor)</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ccfaeb">bias = log( &#960; / (1&#8722;&#960;) )</FONT>>];
+
+  cog [color="#5fd0e0", fillcolor="#0e3a44", label=<
+    <B><FONT POINT-SIZE="13">accreted onto the Case node in Cognee &#8594; Agent 3 (Adjudicator)</FONT></B>>];
+
+  // ── dashed side notes ─────────────────────────────────────────────────
+  nDecoy [shape=box, style="filled,dashed,rounded", color="#8ab4ff", fillcolor="#141c2e", label=<
+    <B><FONT POINT-SIZE="12" COLOR="#bcd0ff">Safeguard · decoy-proof</FONT></B><BR/>
+    <FONT POINT-SIZE="10.5" COLOR="#cdd9f0">device_shared gets the SAME prior in both classes</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#dbe6ff">&#966;<SUB>mule,dev</SUB> = &#966;<SUB>legit,dev</SUB> &#10233; contribution = 0</FONT>>];
+
+  nMask [shape=box, style="filled,dashed,rounded", color="#b794ff", fillcolor="#1c1830", label=<
+    <B><FONT POINT-SIZE="12" COLOR="#d3c2ff">Safeguard · missing &#8800; guilty</FONT></B><BR/>
+    <FONT POINT-SIZE="10.5" COLOR="#e0d6f6">impossible flags are structural zeros, not evidence</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#ece2ff">M<SUB>ik</SUB> = 0 &#10233; that term drops out of ll</FONT>>];
+
+  nLse [shape=box, style="filled,dashed,rounded", color="#f7b733", fillcolor="#2a2410", label=<
+    <B><FONT POINT-SIZE="12" COLOR="#ffd98a">Why logsumexp</FONT></B><BR/>
+    <FONT POINT-SIZE="10.5" COLOR="#ffe9bf">marginalizes the hidden discrete class analytically (log-sum-exp trick)</FONT><BR/>
+    <FONT FACE="Menlo" POINT-SIZE="11" COLOR="#fff3da">p(X<SUB>i</SUB>) = &#931;<SUB>c</SUB> p(c) · p(X<SUB>i</SUB>|c)</FONT>>];
+
+  // ── main flow ─────────────────────────────────────────────────────────
+  inputs -> lik   [color="#5fd0e0"];
+  priors -> lik   [color="#8ab4ff"];
+  lik    -> mix   [color="#b794ff", label=<  <FONT POINT-SIZE="11" COLOR="#cdbcff">ll<SUB>mule</SUB>, ll<SUB>legit</SUB></FONT>>];
+  priors -> mix   [color="#8ab4ff", style=dashed, label=<  <FONT POINT-SIZE="11" COLOR="#cfe0ff">&#960;</FONT>>];
+  mix    -> samp  [color="#f7b733"];
+  samp   -> check [color="#34d6a4"];
+  check  -> theta [color="#fb923c", label=<  <FONT POINT-SIZE="11" COLOR="#ffd9b8">chains agree</FONT>>];
+  check  -> samp  [color="#fb923c", style=dashed, constraint=false, label=<  <FONT POINT-SIZE="11" COLOR="#ffd9b8">disagree: retune &amp; resample</FONT>>];
+  theta  -> outP  [color="#ff7ad9"];
+  theta  -> outCI [color="#ff7ad9"];
+  theta  -> outC  [color="#ff7ad9"];
+  outP   -> cog   [color="#34d6a4"];
+  outCI  -> cog   [color="#34d6a4"];
+  outC   -> cog   [color="#34d6a4"];
+
+  // ── note attachments (dotted) ─────────────────────────────────────────
+  edge [style=dotted, arrowhead=none, penwidth=1.0];
+  nDecoy -> priors [color="#8ab4ff"];
+  nMask  -> lik    [color="#b794ff"];
+  nLse   -> mix    [color="#f7b733"];
+
+  // ── rank hints ────────────────────────────────────────────────────────
+  { rank=same; nDecoy; priors; }
+  { rank=same; nMask; lik; }
+  { rank=same; nLse; mix; }
+  { rank=same; outP; outCI; outC; }
+}

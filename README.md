@@ -110,14 +110,19 @@ flowchart TB
 The data has **no labels**, so the Estimator doesn't classify — it *infers*. It posits two latent classes (**legit** vs **mule**), each with its own vector of signal fire-rates `φ`, and lets **PyMC's NUTS sampler (`nutpie`, 4 chains)** learn the rates, the mixing weight, and every account's posterior probability of being a mule — with an honest credible interval.
 
 <p align="center">
-  <img src="docs/diagrams/pymc-estimator.png" alt="The masked two-component Bayesian mixture — data flow" width="100%">
+  <img src="docs/diagrams/pymc-estimator-explained.png" alt="The masked two-component Bayesian mixture — annotated data flow with equations" width="100%">
 </p>
-<p align="center"><sub><b>The data flow.</b> Inputs from Cognee + Beta priors → a masked likelihood → the <code>logsumexp</code> mixture → NUTS → a full posterior → the three fields written back onto the <code>Case</code> node. The three callouts are the real Bayesian engineering, below.</sub></p>
+<p align="center"><sub><b>The data flow, explained.</b> Each step carries its equation — Beta priors → masked product-of-Bernoullis likelihood → the <code>logsumexp</code> mixture → NUTS (with a convergence-check loop) → the posterior θ → the three fields written back to the <code>Case</code> node. The dashed callouts are the real Bayesian engineering, below.</sub></p>
 
 <p align="center">
   <img src="docs/diagrams/pymc-model-graph.png" alt="The PyMC plate-notation model graph" width="78%">
 </p>
 <p align="center"><sub><b>The model itself.</b> The <code>pm.model_to_graphviz</code> plate graph generated from the actual model in <code>agents/ranker.py</code> — the <code>feature</code> plate over the 7 signals, the <code>account</code> plate over N accounts, and the mixture folded into one <code>Potential</code>. Reproducible: <code>dot -Tpng docs/diagrams/pymc-model-graph.gv -o docs/diagrams/pymc-model-graph.png</code>.</sub></p>
+
+<p align="center">
+  <img src="docs/diagrams/posterior-gradient.png" alt="Posterior mule-probability with 94% credible intervals, per account" width="100%">
+</p>
+<p align="center"><sub><b>The output.</b> Every account's posterior probability of being a mule, with its 94% credible interval (the glow). The 9-account ring pins high &amp; tight (confidently flagged); the shared-device decoys sit at ~0 (confidently cleared); only <code>AC-0012</code> returns broad and τ-straddling → routed to human review. Real output of <code>agents/ranker.py</code>.</sub></p>
 
 Three pieces of real Bayesian engineering — each is why a demo moment lands:
 
